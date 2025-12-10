@@ -41,4 +41,5 @@ export const latestPostsBlock = defineBlock({
   type: "latestPosts",
   propsSchema: latestPostsPropsSchema,
   renderHtml: renderLatestPosts,
+  sourceFile: import.meta.url,
 });

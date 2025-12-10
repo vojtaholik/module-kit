@@ -28,4 +28,5 @@ export const featureGridBlock = defineBlock({
   type: "featureGrid",
   propsSchema: featureGridPropsSchema,
   renderHtml: renderFeatureGrid,
+  sourceFile: import.meta.url,
 });

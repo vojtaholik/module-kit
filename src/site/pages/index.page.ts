@@ -3,7 +3,7 @@ import type { PageConfig } from "@static-block-kit/core";
 export const indexPage: PageConfig = {
   id: "home",
   path: "/",
-  title: "Welcome to Static Kit",
+  title: "JAP",
   template: "base.html",
   density: "comfortable",
   regions: {

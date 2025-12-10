@@ -36,4 +36,5 @@ export const heroBlock = defineBlock({
   type: "hero",
   propsSchema: heroPropsSchema,
   renderHtml: renderHero,
+  sourceFile: import.meta.url,
 });

@@ -21,4 +21,5 @@ export const textSectionBlock = defineBlock({
   type: "textSection",
   propsSchema: textSectionPropsSchema,
   renderHtml: renderTextSection,
+  sourceFile: import.meta.url,
 });

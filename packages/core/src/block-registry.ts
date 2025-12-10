@@ -35,20 +35,26 @@ export interface BlockDefinition<T extends z.ZodType = z.ZodType> {
   type: string;
   propsSchema: T;
   renderHtml: (input: RenderBlockInput<T>) => string;
+  /** Source file path (for dev inspector) - pass import.meta.url */
+  sourceFile?: string;
 }
 
 /**
  * Define a block with type-safe props
+ * Pass `sourceFile: import.meta.url` to enable click-to-open in dev inspector
  */
 export function defineBlock<T extends z.ZodType>(config: {
   type: string;
   propsSchema: T;
   renderHtml: (input: RenderBlockInput<T>) => string;
+  /** Source file path - pass import.meta.url */
+  sourceFile?: string;
 }): BlockDefinition<T> {
   return {
     type: config.type,
     propsSchema: config.propsSchema,
     renderHtml: config.renderHtml,
+    sourceFile: config.sourceFile,
   };
 }
 

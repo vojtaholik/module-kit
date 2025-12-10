@@ -68,9 +68,10 @@ export async function renderPage(
   options: RenderPageOptions
 ): Promise<string> {
   const templatePath = `${options.templateDir}/${page.template}`;
-  
+
   // Use provided readFile or default to Bun.file
-  const readFile = options.readFile ?? (async (path: string) => await Bun.file(path).text());
+  const readFile =
+    options.readFile ?? (async (path: string) => await Bun.file(path).text());
   const templateHtml = await readFile(templatePath);
 
   // Parse the template
@@ -122,7 +123,9 @@ export async function renderPage(
   });
 
   // Serialize to HTML
-  let html = parse5.serialize(document as unknown as parse5.DefaultTreeAdapterMap["parentNode"]);
+  let html = parse5.serialize(
+    document as unknown as parse5.DefaultTreeAdapterMap["parentNode"]
+  );
 
   // Replace markers with actual region content
   for (const [regionName, content] of Object.entries(regionContent)) {

@@ -105,24 +105,38 @@ function broadcastReload(type: "full" | "css" = "full") {
 // Watch for file changes
 const watchDirs = [blocksDir, pagesDir, publicDir];
 
+async function handleFileChange(filename: string) {
+  // Ignore generated files
+  if (filename.includes("/gen/") || filename.endsWith(".render.ts")) return;
+
+  if (filename.endsWith(".css")) {
+    broadcastReload("css");
+    return;
+  }
+
+  // HTML template changed - recompile templates before reload
+  if (filename.endsWith(".block.html")) {
+    console.log(`📝 Template changed: ${filename}`);
+    await compileBlockTemplates({
+      blocksDir,
+      genDir: join(blocksDir, "gen"),
+    });
+    // bun --watch will restart the server after recompile
+    // which triggers browser reload via SSE reconnect
+    return;
+  }
+
+  // For other source files, just broadcast (bun --watch handles the restart)
+  if (filename.endsWith(".ts") || filename.endsWith(".js")) {
+    broadcastReload("full");
+  }
+}
+
 for (const dir of watchDirs) {
   try {
     watch(dir, { recursive: true }, (event, filename) => {
       if (!filename) return;
-
-      // Ignore generated files and non-source files
-      if (filename.includes("/gen/") || filename.endsWith(".render.ts")) return;
-
-      // Determine reload type
-      if (filename.endsWith(".css")) {
-        broadcastReload("css");
-      } else if (
-        filename.endsWith(".ts") ||
-        filename.endsWith(".html") ||
-        filename.endsWith(".js")
-      ) {
-        broadcastReload("full");
-      }
+      handleFileChange(filename);
     });
   } catch {
     // Directory might not exist yet
@@ -214,14 +228,31 @@ Bun.serve({
           const page = pages.find((p) => p.id === decoded.pageId);
           const region = page?.regions[decoded.region];
           const block = region?.blocks.find((b) => b.id === decoded.blockId);
+          const blockDef = block ? blockRegistry.get(block.type) : null;
+
+          // Convert file:// URL to absolute path if needed
+          const sourceFile = blockDef?.sourceFile?.startsWith("file://")
+            ? blockDef.sourceFile.replace("file://", "")
+            : blockDef?.sourceFile;
 
           return Response.json({
             address: decoded,
             page: page
-              ? { id: page.id, path: page.path, title: page.title }
+              ? {
+                  id: page.id,
+                  path: page.path,
+                  title: page.title,
+                  sourceFile: `${pagesDir}/${decoded.pageId}.page.ts`,
+                }
               : null,
             block: block
-              ? { id: block.id, type: block.type, props: block.props }
+              ? {
+                  id: block.id,
+                  type: block.type,
+                  props: block.props,
+                  sourceFile,
+                  templateFile: `${blocksDir}/${block.type}.block.html`,
+                }
               : null,
             schema: block ? cmsBlocks[block.type] : null,
           });
