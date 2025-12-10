@@ -363,4 +363,197 @@
   });
 
   console.log("Static Kit Dev Overlay loaded. Alt+click on blocks to inspect.");
+
+  // ==========================================================================
+  // Slot Error Toast
+  // ==========================================================================
+
+  var errorToast = null;
+  var slotErrors = [];
+
+  function createErrorToast() {
+    var el = document.createElement("div");
+    el.id = "static-kit-slot-errors";
+    el.innerHTML = [
+      "<style>",
+      "#static-kit-slot-errors {",
+      "  position: fixed;",
+      "  bottom: 16px;",
+      "  right: 16px;",
+      "  z-index: 99998;",
+      "  background: #1a1a2e;",
+      "  border: 1px solid #ef4444;",
+      "  border-radius: 8px;",
+      "  font-family: ui-monospace, monospace;",
+      "  font-size: 13px;",
+      "  line-height: 1.5;",
+      "  max-width: 420px;",
+      "  max-height: 300px;",
+      "  overflow: auto;",
+      "  box-shadow: 0 10px 40px rgba(239,68,68,0.3);",
+      "}",
+      "#static-kit-slot-errors .header {",
+      "  display: flex;",
+      "  align-items: center;",
+      "  justify-content: space-between;",
+      "  padding: 10px 14px;",
+      "  background: rgba(239,68,68,0.15);",
+      "  border-bottom: 1px solid #374151;",
+      "  position: sticky;",
+      "  top: 0;",
+      "}",
+      "#static-kit-slot-errors .header-title {",
+      "  color: #ef4444;",
+      "  font-weight: 600;",
+      "  display: flex;",
+      "  align-items: center;",
+      "  gap: 8px;",
+      "}",
+      "#static-kit-slot-errors .header-count {",
+      "  background: #ef4444;",
+      "  color: #fff;",
+      "  padding: 2px 8px;",
+      "  border-radius: 10px;",
+      "  font-size: 11px;",
+      "}",
+      "#static-kit-slot-errors .close-btn {",
+      "  background: none;",
+      "  border: none;",
+      "  color: #9ca3af;",
+      "  cursor: pointer;",
+      "  padding: 4px;",
+      "  font-size: 16px;",
+      "}",
+      "#static-kit-slot-errors .close-btn:hover { color: #fff; }",
+      "#static-kit-slot-errors .error-list {",
+      "  padding: 0;",
+      "  margin: 0;",
+      "  list-style: none;",
+      "}",
+      "#static-kit-slot-errors .error-item {",
+      "  padding: 10px 14px;",
+      "  border-bottom: 1px solid #374151;",
+      "  color: #e5e7eb;",
+      "}",
+      "#static-kit-slot-errors .error-item:last-child {",
+      "  border-bottom: none;",
+      "}",
+      "#static-kit-slot-errors .error-type {",
+      "  color: #f87171;",
+      "  font-weight: 600;",
+      "  margin-bottom: 4px;",
+      "}",
+      "#static-kit-slot-errors .error-block {",
+      "  color: #fbbf24;",
+      "}",
+      "#static-kit-slot-errors .error-details {",
+      "  color: #9ca3af;",
+      "  font-size: 12px;",
+      "  margin-top: 4px;",
+      "  word-break: break-word;",
+      "}",
+      "#static-kit-slot-errors .error-addr {",
+      "  color: #6b7280;",
+      "  font-size: 11px;",
+      "  margin-top: 4px;",
+      "}",
+      "</style>",
+      '<div class="header">',
+      '  <span class="header-title">',
+      "    ⚠️ Slot Errors",
+      '    <span class="header-count">0</span>',
+      "  </span>",
+      '  <button class="close-btn" aria-label="Dismiss">&times;</button>',
+      "</div>",
+      '<ul class="error-list"></ul>',
+    ].join("\n");
+    document.body.appendChild(el);
+
+    el.querySelector(".close-btn").addEventListener("click", function () {
+      el.style.display = "none";
+    });
+
+    return el;
+  }
+
+  function collectSlotErrors() {
+    var scripts = document.querySelectorAll("script[data-slot-error]");
+    slotErrors = [];
+
+    scripts.forEach(function (script) {
+      try {
+        var data = JSON.parse(script.textContent);
+        slotErrors.push(data);
+      } catch (e) {
+        console.error("[Dev] Failed to parse slot error:", e);
+      }
+    });
+
+    return slotErrors;
+  }
+
+  function renderSlotErrors() {
+    collectSlotErrors();
+
+    if (slotErrors.length === 0) {
+      if (errorToast) {
+        errorToast.style.display = "none";
+      }
+      return;
+    }
+
+    if (!errorToast) {
+      errorToast = createErrorToast();
+    }
+
+    errorToast.style.display = "block";
+    errorToast.querySelector(".header-count").textContent = slotErrors.length;
+
+    var list = errorToast.querySelector(".error-list");
+    list.innerHTML = slotErrors
+      .map(function (err) {
+        var typeLabel =
+          err.type === "not-found"
+            ? 'Block not found: <span class="error-block">' +
+              err.blockType +
+              "</span>"
+            : 'Validation failed: <span class="error-block">' +
+              err.blockType +
+              "</span>";
+        var details = err.details
+          ? '<div class="error-details">' +
+            escapeForHtml(err.details) +
+            "</div>"
+          : "";
+        var addr = err.addr
+          ? '<div class="error-addr">' +
+            err.addr.pageId +
+            " → " +
+            err.addr.region +
+            " → " +
+            err.addr.blockId +
+            (err.addr.propPath ? " → " + err.addr.propPath : "") +
+            "</div>"
+          : "";
+        return (
+          '<li class="error-item">' +
+          '<div class="error-type">' +
+          typeLabel +
+          "</div>" +
+          details +
+          addr +
+          "</li>"
+        );
+      })
+      .join("");
+  }
+
+  function escapeForHtml(str) {
+    var div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // Check for slot errors on page load
+  renderSlotErrors();
 })();

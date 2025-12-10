@@ -124,3 +124,73 @@ export function escapeHtml(str: unknown): string {
 export function escapeAttr(str: unknown): string {
   return escapeHtml(str);
 }
+
+/**
+ * Format a slot error for dev overlay display
+ */
+function formatSlotError(
+  type: "not-found" | "validation",
+  blockType: string,
+  addr: SchemaAddress,
+  details?: string
+): string {
+  const errorData = JSON.stringify({
+    type,
+    blockType,
+    addr,
+    details,
+  });
+  // Hidden element that dev overlay will pick up
+  return `<script type="application/json" data-slot-error>${escapeHtml(
+    errorData
+  )}</script>`;
+}
+
+/**
+ * Render a slot with optional block delegation
+ *
+ * If blockType is provided and valid, renders that block with slotProps.
+ * Otherwise, renders the fallback content.
+ *
+ * @param blockType - Block type string to delegate rendering to (optional)
+ * @param slotProps - Props to pass to the delegated block
+ * @param ctx - Render context
+ * @param addr - Schema address for CMS editing
+ * @param fallback - Function that returns fallback HTML if no block specified
+ */
+export function renderSlot(
+  blockType: string | undefined,
+  slotProps: Record<string, unknown>,
+  ctx: RenderContext,
+  addr: SchemaAddress,
+  fallback: () => string
+): string {
+  if (!blockType) return fallback();
+
+  const block = blockRegistry.get(blockType);
+  if (!block) {
+    const msg = `renderSlot: Unknown block type "${blockType}", using fallback`;
+    console.warn(msg);
+    const errorHtml = ctx.isDev
+      ? formatSlotError("not-found", blockType, addr)
+      : "";
+    return errorHtml + fallback();
+  }
+
+  const result = block.propsSchema.safeParse(slotProps);
+  if (!result.success) {
+    const issues = result.error.issues
+      .map((i) => `${i.path.join(".")}: ${i.message}`)
+      .join("; ");
+    console.warn(
+      `renderSlot: Props validation failed for "${blockType}", using fallback:`,
+      issues
+    );
+    const errorHtml = ctx.isDev
+      ? formatSlotError("validation", blockType, addr, issues)
+      : "";
+    return errorHtml + fallback();
+  }
+
+  return block.renderHtml({ props: result.data, ctx, addr });
+}

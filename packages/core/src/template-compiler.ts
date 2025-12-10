@@ -9,6 +9,7 @@
  * - v-if="expr" - conditional rendering
  * - v-for="item, i in props.items" - iteration
  * - :attr="expr" - dynamic attribute binding
+ * - <render-slot :block="expr" :props="expr" :index="expr">fallback</render-slot> - slot delegation
  */
 
 import * as parse5 from "parse5";
@@ -121,7 +122,7 @@ export function compileTemplate(
   const pascalName = toPascalCase(blockName);
 
   let code = `// Auto-generated - DO NOT EDIT
-import { escapeHtml, escapeAttr, type RenderBlockInput } from "${coreImportPath}";
+import { escapeHtml, escapeAttr, renderSlot, type RenderBlockInput } from "${coreImportPath}";
 import { encodeSchemaAddress } from "${coreImportPath}";
 
 export function render${pascalName}(input: RenderBlockInput): string {
@@ -195,6 +196,11 @@ function compileNode(node: Node, indent: number): string {
   // Handle <template> tag - just render children
   if (tagName === "template") {
     return compileNodes(element.childNodes || [], indent);
+  }
+
+  // Handle <render-slot> - delegate rendering to another block with fallback
+  if (tagName === "render-slot") {
+    return compileRenderSlot(element, indent);
   }
 
   // Regular element
@@ -376,6 +382,76 @@ function compileVFor(element: Element, expr: string, indent: number): string {
   }
 
   code += `${pad}}\n`;
+
+  return code;
+}
+
+/**
+ * Compile <render-slot> element
+ *
+ * Syntax: <render-slot :block="blockType" :props="propsExpr" :index="indexExpr">fallback</render-slot>
+ *
+ * - :block - Expression evaluating to block type string (required)
+ * - :props - Expression evaluating to props object for the delegated block (required)
+ * - :index - Optional expression for array index (used to build propPath like "posts[0]")
+ * - :prop-path - Optional expression for explicit prop path (alternative to :index)
+ * - Children are rendered as fallback when block is not specified or invalid
+ */
+function compileRenderSlot(element: Element, indent: number): string {
+  const pad = "  ".repeat(indent);
+  const attrs = element.attrs || [];
+
+  const blockExpr = getAttr(attrs, ":block");
+  const propsExpr = getAttr(attrs, ":props");
+  const indexExpr = getAttr(attrs, ":index");
+  const propPathExpr = getAttr(attrs, ":prop-path");
+
+  if (!blockExpr) {
+    throw new Error("<render-slot> requires :block attribute");
+  }
+  if (!propsExpr) {
+    throw new Error("<render-slot> requires :props attribute");
+  }
+
+  let code = "";
+
+  // Build the addr expression with propPath
+  let addrExpr: string;
+  if (propPathExpr) {
+    // Explicit prop path provided
+    addrExpr = `{ ...addr, propPath: ${propPathExpr} }`;
+  } else if (indexExpr) {
+    // Build prop path from index (assumes we're iterating over an array prop)
+    // This creates paths like "posts[0]", "posts[1]" etc.
+    addrExpr = `{ ...addr, propPath: (addr.propPath ? addr.propPath + "[" + ${indexExpr} + "]" : "[" + ${indexExpr} + "]") }`;
+  } else {
+    // No prop path
+    addrExpr = "addr";
+  }
+
+  // Compile fallback children
+  const rawChildren = element.childNodes || [];
+  const children = rawChildren.filter((node, i, arr) => {
+    if (node.nodeName === "#text") {
+      const text = node.value || "";
+      if (text.trim()) return true;
+      if (i === 0 || i === arr.length - 1) return false;
+    }
+    return true;
+  });
+
+  // Generate the renderSlot call
+  code += `${pad}out += renderSlot(\n`;
+  code += `${pad}  ${blockExpr},\n`;
+  code += `${pad}  ${propsExpr},\n`;
+  code += `${pad}  ctx,\n`;
+  code += `${pad}  ${addrExpr},\n`;
+  code += `${pad}  () => {\n`;
+  code += `${pad}    let _slot = "";\n`;
+  code += compileNodes(children, indent + 2).replace(/\bout\b/g, "_slot");
+  code += `${pad}    return _slot;\n`;
+  code += `${pad}  }\n`;
+  code += `${pad});\n`;
 
   return code;
 }
