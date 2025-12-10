@@ -1,4 +1,8 @@
-<section class="section section--hero section--tone-{{ ctx.layout.tone }}" data-block-id="{{ addr.blockId }}" data-schema-address="{{ encodeSchemaAddress(addr) }}">
+<section
+  class="section section--hero section--tone-{{ ctx.layout.tone }}"
+  data-block-id="{{ addr.blockId }}"
+  data-schema-address="{{ encodeSchemaAddress(addr) }}"
+>
   <div class="container container--{{ ctx.layout.contentWidth }}">
     <div class="hero__content hero__content--{{ ctx.layout.contentAlign }}">
       <template v-if="props.eyebrow">
@@ -11,10 +15,14 @@
       <template v-if="props.primaryCta || props.secondaryCta">
         <div class="hero__actions">
           <template v-if="props.primaryCta">
-            <a class="btn btn--primary" :href="props.primaryCta.href">{{ props.primaryCta.label }}</a>
+            <a class="btn btn--primary" :href="props.primaryCta.href">
+              {{ props.primaryCta.label }}
+            </a>
           </template>
           <template v-if="props.secondaryCta">
-            <a class="btn btn--secondary" :href="props.secondaryCta.href">{{ props.secondaryCta.label }}</a>
+            <a class="btn btn--secondary" :href="props.secondaryCta.href">
+              {{ props.secondaryCta.label }}
+            </a>
           </template>
         </div>
       </template>

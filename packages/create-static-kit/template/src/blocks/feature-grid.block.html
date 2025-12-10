@@ -1,13 +1,7 @@
-<section
-  class="section section--feature-grid section--tone-{{ ctx.layout.tone }}"
-  data-block-id="{{ addr.blockId }}"
-  data-schema-address="{{ encodeSchemaAddress(addr) }}"
->
+<section class="section section--feature-grid section--tone-{{ ctx.layout.tone }}" data-block-id="{{ addr.blockId }}" data-schema-address="{{ encodeSchemaAddress(addr) }}">
   <div class="container container--{{ ctx.layout.contentWidth }}">
     <template v-if="props.headline || props.subheadline">
-      <div
-        class="section__header section__header--{{ ctx.layout.contentAlign }}"
-      >
+      <div class="section__header section__header--{{ ctx.layout.contentAlign }}">
         <template v-if="props.headline">
           <h2 class="h2">{{ props.headline }}</h2>
         </template>
@@ -25,9 +19,7 @@
           <h3 class="h3 card__title">{{ feature.title }}</h3>
           <p class="text-body card__description">{{ feature.description }}</p>
           <template v-if="feature.link">
-            <a class="card__link" :href="feature.link.href">
-              {{ feature.link.label }}
-            </a>
+            <a class="card__link" :href="feature.link.href">{{ feature.link.label }}</a>
           </template>
         </div>
       </template>

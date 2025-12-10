@@ -1,8 +1,4 @@
-<section
-  class="section section--latest-posts section--tone-{{ ctx.layout.tone }}"
-  data-block-id="{{ addr.blockId }}"
-  data-schema-address="{{ encodeSchemaAddress(addr) }}"
->
+<section class="section section--latest-posts section--tone-{{ ctx.layout.tone }}" data-block-id="{{ addr.blockId }}" data-schema-address="{{ encodeSchemaAddress(addr) }}">
   <div class="container container--{{ ctx.layout.contentWidth }}">
     <div class="section__header section__header--{{ ctx.layout.contentAlign }}">
       <template v-if="props.headline">
@@ -17,7 +13,7 @@
         <article class="card card--post">
           <template v-if="post.image">
             <div class="card__image">
-              <img :src="post.image.src" :alt="post.image.alt" loading="lazy" />
+              <img :src="post.image.src" :alt="post.image.alt" loading="lazy">
             </div>
           </template>
           <div class="card__body">
@@ -28,18 +24,14 @@
             <template v-if="post.excerpt">
               <p class="text-body card__excerpt">{{ post.excerpt }}</p>
             </template>
-            <a class="card__link" :href="post.link.href">
-              {{ post.link.label }}
-            </a>
+            <a class="card__link" :href="post.link.href">{{ post.link.label }}</a>
           </div>
         </article>
       </template>
     </div>
     <template v-if="props.viewAllLink">
       <div class="section__footer">
-        <a class="btn btn--secondary" :href="props.viewAllLink.href">
-          {{ props.viewAllLink.label }}
-        </a>
+        <a class="btn btn--secondary" :href="props.viewAllLink.href">{{ props.viewAllLink.label }}</a>
       </div>
     </template>
   </div>

@@ -1,8 +1,4 @@
-<section
-  class="section section--text section--tone-{{ ctx.layout.tone }}"
-  data-block-id="{{ addr.blockId }}"
-  data-schema-address="{{ encodeSchemaAddress(addr) }}"
->
+<section class="section section--text section--tone-{{ ctx.layout.tone }}" data-block-id="{{ addr.blockId }}" data-schema-address="{{ encodeSchemaAddress(addr) }}">
   <div class="container container--{{ ctx.layout.contentWidth }}">
     <div class="text-section text-section--{{ ctx.layout.contentAlign }}">
       <template v-if="props.eyebrow">
@@ -14,9 +10,7 @@
       <div class="prose">{{{ props.body }}}</div>
       <template v-if="props.cta">
         <div class="text-section__cta">
-          <a class="btn btn--primary" :href="props.cta.href">
-            {{ props.cta.label }}
-          </a>
+          <a class="btn btn--primary" :href="props.cta.href">{{ props.cta.label }}</a>
         </div>
       </template>
     </div>

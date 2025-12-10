@@ -50,8 +50,9 @@
         }
 
         if (data.type === "css") {
-          // Hot reload CSS without full page refresh
+          // Hot reload CSS and SVG sprites without full page refresh
           reloadCSS();
+          reloadSVGSprites();
         } else if (data.type === "full") {
           // Full page reload
           console.log("[HMR] Reloading...");
@@ -111,6 +112,32 @@
 
       link.parentNode.insertBefore(newLink, link.nextSibling);
     });
+  }
+
+  function reloadSVGSprites() {
+    // Find all <use> elements referencing sprite files
+    var uses = document.querySelectorAll("use[href*='sprite']");
+    if (uses.length === 0) return;
+
+    var timestamp = Date.now();
+    uses.forEach(function (use) {
+      var href = use.getAttribute("href");
+      if (!href) return;
+
+      // Parse href and add cache-busting param
+      var hashIndex = href.indexOf("#");
+      var path = hashIndex > -1 ? href.slice(0, hashIndex) : href;
+      var fragment = hashIndex > -1 ? href.slice(hashIndex) : "";
+
+      // Strip existing _hmr param if present
+      var cleanPath = path.replace(/[?&]_hmr=\d+/, "");
+      var separator = cleanPath.indexOf("?") > -1 ? "&" : "?";
+      var newHref = cleanPath + separator + "_hmr=" + timestamp + fragment;
+
+      use.setAttribute("href", newHref);
+    });
+
+    console.log("[HMR] SVG sprites reloaded (" + uses.length + " refs)");
   }
 
   // Start HMR connection
