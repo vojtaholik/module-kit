@@ -1,0 +1,209 @@
+---
+description: Rules for extracting block definitions from Figma using MCP
+globs: "*.block.ts, *.block.html"
+alwaysApply: false
+---
+
+# Figma MCP Block Extraction Rules
+
+When using Figma MCP to define or extract blocks for static-kit, follow these conventions.
+
+## Figma Component Naming → Block Type
+
+| Figma Component Name | Block File              | Block Type      |
+| -------------------- | ----------------------- | --------------- |
+| `Hero`               | `hero.block.ts`         | `"hero"`        |
+| `FeatureGrid`        | `feature-grid.block.ts` | `"featureGrid"` |
+| `TextSection`        | `text-section.block.ts` | `"textSection"` |
+
+- Use PascalCase in Figma, kebab-case for files, camelCase for type
+- Top-level Figma components with suffix `/Block` or in a `Blocks` page → blocks
+- Variants in Figma → optional props or enum fields
+
+## Figma Layer Naming → Props Schema
+
+Map Figma layer names to Zod schema fields:
+
+| Figma Layer Pattern            | Zod Schema                     |
+| ------------------------------ | ------------------------------ |
+| `Headline`, `Title`            | `z.string()` (required)        |
+| `Subheadline?`, `Description?` | `z.string().optional()`        |
+| `Eyebrow?`                     | `z.string().optional()`        |
+| `PrimaryCTA`, `SecondaryCTA?`  | CTA object (see below)         |
+| `Image`, `BackgroundImage?`    | Image object (see below)       |
+| `Icon?`                        | `z.string().optional()`        |
+| `Features[]`, `Items[]`        | `z.array()` of child structure |
+
+**Naming conventions:**
+
+- `?` suffix in Figma layer name → `.optional()` in schema
+- `[]` suffix → `z.array()` with item schema from nested layers
+- Nested frames → nested `z.object()`
+
+## Standard Object Schemas
+
+### CTA / Link
+
+```ts
+z.object({
+  href: z.string(),
+  label: z.string(),
+  external: z.boolean().optional(),
+});
+```
+
+Figma should have child text layers: `Label` for text, use component property or description for `href`.
+
+### Image
+
+```ts
+z.object({
+  src: z.string(),
+  alt: z.string(),
+  width: z.number().optional(),
+  height: z.number().optional(),
+});
+```
+
+Figma image fills or image frames → extract dimensions from frame.
+
+### Select / Enum
+
+Figma component variants → `z.enum()`:
+
+```ts
+// Figma variant: Columns=2, Columns=3, Columns=4
+columns: z.enum(["2", "3", "4"]).default("3");
+```
+
+## Figma Instance Properties → Block Props
+
+- **Text overrides** → `z.string()`
+- **Boolean properties** (show/hide) → `z.boolean().optional()`
+- **Variant properties** → `z.enum()` or conditional props
+- **Instance swaps** → nested object or discriminated union
+- **Component descriptions** → use for prop JSDoc
+
+## Block File Structure
+
+When extracting from Figma, generate:
+
+### 1. Schema file: `{name}.block.ts`
+
+```ts
+import { z } from "zod/v4";
+import { defineBlock } from "@static-block-kit/core";
+import { render{Name} } from "./gen/{name}.render.ts";
+
+export const {name}PropsSchema = z.object({
+  // Props from Figma layers
+});
+
+export type {Name}Props = z.infer<typeof {name}PropsSchema>;
+
+export const {name}Block = defineBlock({
+  type: "{name}",
+  propsSchema: {name}PropsSchema,
+  renderHtml: render{Name},
+});
+```
+
+### 2. Template file: `{name}.block.html`
+
+```html
+<section
+  class="section section--{name} section--tone-{{ ctx.layout.tone }}"
+  data-block-id="{{ addr.blockId }}"
+  data-schema-address="{{ encodeSchemaAddress(addr) }}"
+>
+  <div class="container container--{{ ctx.layout.contentWidth }}">
+    <!-- Content mapped from Figma auto-layout structure -->
+  </div>
+</section>
+```
+
+## Template Syntax Mapping
+
+| Figma Structure          | HTML Template                                          |
+| ------------------------ | ------------------------------------------------------ |
+| Text layer               | `{{ props.fieldName }}`                                |
+| Conditional visibility   | `<template v-if="props.field">...</template>`          |
+| Auto-layout (vertical)   | Stack of elements                                      |
+| Auto-layout (horizontal) | Flex container / grid                                  |
+| Repeated instances       | `<template v-for="item in props.items">...</template>` |
+| Frame with fill image    | `style="background-image: url({{ props.image.src }})"` |
+
+## Figma → CMS Field Type Mapping
+
+For CMS-driven blocks:
+
+| Figma Layer Type      | CMS Field Type |
+| --------------------- | -------------- |
+| Text layer            | `"text"`       |
+| Multi-line text       | `"richText"`   |
+| Image fill/frame      | `"image"`      |
+| Button/link component | `"link"`       |
+| Boolean variant       | `"boolean"`    |
+| Variant property      | `"select"`     |
+| Number in description | `"number"`     |
+| Nested frame          | `"object"`     |
+| Repeated instances    | `"array"`      |
+
+## Extraction Workflow
+
+1. **Identify blocks**: Look for top-level components in Figma's Blocks/Components page
+2. **Analyze variants**: Map to optional props or enums
+3. **Extract layer tree**: Convert to nested zod schema
+4. **Check auto-layout**: Infer HTML structure (flex, grid, stack)
+5. **Map text styles**: To CSS classes (h1, h2, text-body, etc.)
+6. **Extract colors/spacing**: Reference design tokens, don't hardcode
+
+## Validation Checklist
+
+Before generating block code from Figma:
+
+- [ ] Component name follows naming convention
+- [ ] All text layers have semantic names (not "Text" or "Frame 123")
+- [ ] Optional fields marked with `?` suffix
+- [ ] Arrays marked with `[]` suffix
+- [ ] Variants are properly organized for enum extraction
+- [ ] No hardcoded content in schema (use props)
+- [ ] Auto-layout structure is clean and semantic
+
+## Example: Figma → Block
+
+**Figma Component:** `FeatureGrid`
+
+- Variant: `Columns` (2, 3, 4)
+- Layers:
+  - `Headline?` (text)
+  - `Subheadline?` (text)
+  - `Features[]` (instance)
+    - `Icon?` (instance)
+    - `Title` (text)
+    - `Description` (text)
+    - `Link?` (component)
+
+**Generated Schema:**
+
+```ts
+export const featureGridPropsSchema = z.object({
+  headline: z.string().optional(),
+  subheadline: z.string().optional(),
+  columns: z.enum(["2", "3", "4"]).default("3"),
+  features: z.array(
+    z.object({
+      icon: z.string().optional(),
+      title: z.string(),
+      description: z.string(),
+      link: z
+        .object({
+          href: z.string(),
+          label: z.string(),
+          external: z.boolean().optional(),
+        })
+        .optional(),
+    })
+  ),
+});
+```

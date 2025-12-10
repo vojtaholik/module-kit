@@ -3,8 +3,8 @@ import { defineConfig } from "@static-block-kit/core";
 export default defineConfig({
   blocksDir: "src/blocks",
   pagesDir: "src/site/pages",
-  assetsDir: "src/assets",
-  publicDir: "public",
+  publicDir: "src/public",
   outDir: "dist",
+  publicPath: "/public",
   devPort: 3000,
 });

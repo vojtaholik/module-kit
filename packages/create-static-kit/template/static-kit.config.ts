@@ -1,11 +1,10 @@
 import { defineConfig } from "@static-block-kit/core";
 
 export default defineConfig({
-  // All paths are relative to the project root
   blocksDir: "src/blocks",
   pagesDir: "src/site/pages",
-  assetsDir: "src/assets",
-  publicDir: "public",
+  publicDir: "src/public",
   outDir: "dist",
+  publicPath: "/public",
   devPort: 3000,
 });

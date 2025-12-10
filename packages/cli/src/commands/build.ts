@@ -5,8 +5,8 @@
  * 1. Run template compiler (gen-blocks)
  * 2. Load and validate all page configs
  * 3. Render each page to HTML (no dev overlay)
- * 4. Copy assets to dist/
- * 5. Write HTML files to dist/
+ * 4. Copy publicDir to dist/{publicPath}/ (1:1 structure)
+ * 5. Write HTML files to dist/ (flat structure)
  */
 
 import { mkdir, rm, cp } from "node:fs/promises";
@@ -24,9 +24,11 @@ const config = await loadConfig(cwd);
 
 const blocksDir = resolvePath(config, "blocksDir", cwd);
 const pagesDir = resolvePath(config, "pagesDir", cwd);
-const assetsDir = resolvePath(config, "assetsDir", cwd);
 const publicDir = resolvePath(config, "publicDir", cwd);
 const outDir = resolvePath(config, "outDir", cwd);
+
+// Strip leading slash from publicPath for filesystem operations
+const publicPathDir = config.publicPath.replace(/^\//, "");
 
 async function build() {
   console.log("🔨 Building static site...\n");
@@ -54,7 +56,7 @@ async function build() {
 
   const pages: PageConfig[] = pagesModule.pages;
 
-  // Step 3: Render all pages
+  // Step 3: Render all pages (flat structure in dist/)
   console.log("\n📄 Rendering pages...");
   for (const page of pages) {
     const html = await renderPage(page, {
@@ -63,47 +65,31 @@ async function build() {
       assetBase: "/",
     });
 
-    // Determine output path
-    const outPath =
-      page.path === "/"
-        ? join(outDir, "index.html")
-        : join(outDir, page.path, "index.html");
-
-    // Ensure directory exists
-    await mkdir(dirname(outPath), { recursive: true });
+    // Flat output: /about -> dist/about.html, / -> dist/index.html
+    const fileName =
+      page.path === "/" ? "index.html" : `${page.path.replace(/^\//, "")}.html`;
+    const outPath = join(outDir, fileName);
 
     // Write HTML
     await Bun.write(outPath, html);
     console.log(`  ✓ ${page.path} → ${outPath}`);
   }
 
-  // Step 4: Copy assets
-  console.log("\n📦 Copying assets...");
+  // Step 4: Copy publicDir to dist/public/ (1:1 mirrored structure)
+  console.log("\n📦 Copying public assets...");
+  const outPublicDir = join(outDir, publicPathDir);
 
-  // CSS
-  const cssPath = join(assetsDir, "styles.css");
-  if (await Bun.file(cssPath).exists()) {
-    await Bun.write(join(outDir, "styles.css"), await Bun.file(cssPath).text());
-    console.log("  ✓ styles.css");
-  }
+  const publicGlob = new Glob("**/*");
+  for await (const file of publicGlob.scan(publicDir)) {
+    const srcFile = join(publicDir, file);
+    const destFile = join(outPublicDir, file);
 
-  // JS
-  const jsPath = join(assetsDir, "client/app.js");
-  if (await Bun.file(jsPath).exists()) {
-    await Bun.write(join(outDir, "app.js"), await Bun.file(jsPath).text());
-    console.log("  ✓ app.js");
-  }
-
-  // Public directory (if exists)
-  const publicDirFile = Bun.file(publicDir);
-  try {
-    const stat = await publicDirFile.stat();
-    if (stat) {
-      await cp(publicDir, outDir, { recursive: true });
-      console.log("  ✓ public/");
+    const bunFile = Bun.file(srcFile);
+    if (await bunFile.exists()) {
+      await mkdir(dirname(destFile), { recursive: true });
+      await Bun.write(destFile, await bunFile.arrayBuffer());
+      console.log(`  ✓ ${config.publicPath}/${file}`);
     }
-  } catch {
-    // Public dir doesn't exist, that's fine
   }
 
   // Done

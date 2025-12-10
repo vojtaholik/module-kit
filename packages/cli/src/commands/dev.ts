@@ -25,7 +25,6 @@ const config = await loadConfig(cwd);
 
 const blocksDir = resolvePath(config, "blocksDir", cwd);
 const pagesDir = resolvePath(config, "pagesDir", cwd);
-const assetsDir = resolvePath(config, "assetsDir", cwd);
 const publicDir = resolvePath(config, "publicDir", cwd);
 
 // Compile block templates before importing blocks (gen/ may not exist yet)
@@ -45,7 +44,9 @@ if (typeof blocksModule.registerAllBlocks === "function") {
 }
 
 const pages: PageConfig[] = pagesModule.pages;
-const getPageByPath = pagesModule.getPageByPath as (path: string) => PageConfig | undefined;
+const getPageByPath = pagesModule.getPageByPath as (
+  path: string
+) => PageConfig | undefined;
 
 // Try to load cms-blocks if it exists
 let cmsBlocks: Record<string, unknown> = {};
@@ -57,6 +58,7 @@ try {
 }
 
 const PORT = config.devPort;
+const publicPath = config.publicPath; // e.g. "/public"
 
 // Server start time for HMR restart detection
 const SERVER_START_TIME = Date.now();
@@ -101,7 +103,7 @@ function broadcastReload(type: "full" | "css" = "full") {
 }
 
 // Watch for file changes
-const watchDirs = [blocksDir, pagesDir, assetsDir];
+const watchDirs = [blocksDir, pagesDir, publicDir];
 
 for (const dir of watchDirs) {
   try {
@@ -137,23 +139,9 @@ Bun.serve({
     const path = url.pathname;
 
     try {
-      // Static assets
-      if (path === "/styles.css") {
-        const css = await Bun.file(join(assetsDir, "styles.css")).text();
-        return new Response(css, {
-          headers: { "Content-Type": "text/css" },
-        });
-      }
-
-      if (path === "/app.js") {
-        const js = await Bun.file(join(assetsDir, "client/app.js")).text();
-        return new Response(js, {
-          headers: { "Content-Type": "application/javascript" },
-        });
-      }
-
+      // Dev overlay (special internal asset)
       if (path === "/__dev-overlay.js") {
-        const js = await Bun.file(join(assetsDir, "client/dev-overlay.js")).text();
+        const js = await Bun.file(join(publicDir, "js/dev-overlay.js")).text();
         return new Response(js, {
           headers: { "Content-Type": "application/javascript" },
         });
@@ -245,9 +233,10 @@ Bun.serve({
         }
       }
 
-      // Public static files
-      if (path.startsWith("/public/")) {
-        const filePath = join(publicDir, path.slice(8)); // Remove /public/
+      // Public static files - serve publicDir at publicPath (1:1 mapping)
+      if (path.startsWith(`${publicPath}/`)) {
+        const relativePath = path.slice(publicPath.length + 1);
+        const filePath = join(publicDir, relativePath);
         const file = Bun.file(filePath);
         if (await file.exists()) {
           return new Response(file);
@@ -296,8 +285,8 @@ Bun.serve({
 console.log(`
   Dev server running at http://localhost:${PORT}
 
-  Routes configured from ${pagesDir}
-  Assets served from ${assetsDir}
+  Pages: ${pagesDir}
+  Public: ${publicDir} → ${publicPath}/
 
   Dev API:
     /__pages    → List all pages
