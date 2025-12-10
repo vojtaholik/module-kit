@@ -1,0 +1,265 @@
+---
+description: Master rules for Figma MCP integration with static-kit
+globs: "*.block.ts, *.block.html, *.css, *.svg, public/sprite.svg"
+alwaysApply: true
+---
+
+# Figma MCP Integration Rules for static-kit
+
+These rules define the required workflow and conventions for translating Figma designs into static-kit code.
+
+## Required Flow (DO NOT SKIP)
+
+1. **Run `get_design_context`** first to fetch the structured representation for the exact node(s)
+2. **If response is truncated**, run `get_metadata` to get the high-level node map, then re-fetch only the required node(s)
+3. **Run `get_screenshot`** for a visual reference of the node/variant being implemented
+4. **Only after both `get_design_context` AND `get_screenshot`**, download any assets and start implementation
+5. **Translate the output** into static-kit conventions (NOT React/Tailwind—see Project Conventions below)
+6. **Validate against Figma** for 1:1 visual parity before marking complete
+
+## Asset Handling (CRITICAL)
+
+- The Figma MCP Server provides an assets endpoint which serves image and SVG assets
+- **IMPORTANT**: If Figma MCP returns a localhost source for an image or SVG, use that source directly
+- **IMPORTANT**: DO NOT import/add new icon packages—all assets come from the Figma payload
+- **IMPORTANT**: DO NOT use or create placeholders if a localhost source is provided
+- SVGs go to `public/svg/{name}.svg` and get added to `public/sprite.svg` as symbols
+- Images go to `public/images/{name}.{ext}`
+
+## Project Conventions (Follow These, Not Tailwind/React Output)
+
+### This Project Uses:
+
+- **Plain HTML templates** with Vue-like directives (`v-if`, `v-for`) in `.block.html` files
+- **Zod schemas** with `zod/v4` for prop validation in `.block.ts` files
+- **CSS custom properties** in `public/css/styles.css`—no Tailwind
+- **SVG sprite system** at `public/sprite.svg`—no inline SVGs
+- **BEM-ish class naming**: `.section--{block}`, `.{block}__element`, `.{block}--modifier`
+
+### File Structure:
+
+```
+src/blocks/
+├── {name}.block.ts      # Zod schema + block definition
+├── {name}.block.html    # HTML template with directives
+└── gen/{name}.render.ts # Generated renderer (don't edit)
+```
+
+### Template Directives:
+
+```html
+{{ props.fieldName }}
+<!-- Variable output -->
+<template v-if="props.optional">...</template>
+<!-- Conditionals -->
+<template v-for="item in props.items">...</template>
+<!-- Loops -->
+:style="'property: ' + props.value"
+<!-- Dynamic styles -->
+:class="{ 'class--active': props.active }"
+<!-- Dynamic classes -->
+```
+
+### Standard Block Template Structure:
+
+```html
+<section
+  class="section section--{blockName} section--tone-{{ ctx.layout.tone }}"
+  data-block-id="{{ addr.blockId }}"
+  data-schema-address="{{ encodeSchemaAddress(addr) }}"
+>
+  <div class="container container--{{ ctx.layout.contentWidth }}">
+    <!-- Content -->
+  </div>
+</section>
+```
+
+## Design Token Usage
+
+When Figma provides color, spacing, or typography values:
+
+| Figma Value               | Use This                                                             |
+| ------------------------- | -------------------------------------------------------------------- |
+| Spacing (4, 8, 16, 24...) | `var(--space-1)`, `var(--space-2)`, `var(--space-4)`, etc.           |
+| Colors                    | Map to existing `--color-*` tokens or add semantic tokens to `:root` |
+| Font sizes                | Use `var(--text-base)`, `var(--text-lg)`, `var(--text-xl)`, etc.     |
+| Shadows                   | Use `var(--shadow-sm)`, `var(--shadow-md)`, `var(--shadow-lg)`       |
+| Border radius             | Use `var(--radius-sm)`, `var(--radius-md)`, `var(--radius-lg)`       |
+
+**NEVER hardcode pixel values.** Map to existing tokens or add new semantic tokens.
+
+## SVG/Icon Integration
+
+Always use the sprite pattern:
+
+```html
+<!-- Static icon -->
+<svg class="icon" width="24" height="24" aria-hidden="true">
+  <use href="public/sprite.svg#icon-name" />
+</svg>
+
+<!-- Dynamic icon from props -->
+<template v-if="props.icon">
+  <svg class="icon" width="24" height="24" aria-hidden="true">
+    <use href="public/sprite.svg#{{ props.icon }}" />
+  </svg>
+</template>
+```
+
+## Zod Schema Conventions
+
+```ts
+import { z } from "zod/v4";
+import { defineBlock } from "@static-block-kit/core";
+
+export const {name}PropsSchema = z.object({
+  // Required string
+  title: z.string(),
+
+  // Optional string
+  subtitle: z.string().optional(),
+
+  // Optional CTA/Link
+  primaryCta: z.object({
+    href: z.string(),
+    label: z.string(),
+    external: z.boolean().optional(),
+  }).optional(),
+
+  // Image object
+  image: z.object({
+    src: z.string(),
+    alt: z.string(),
+    width: z.number().optional(),
+    height: z.number().optional(),
+  }).optional(),
+
+  // Array of items
+  items: z.array(z.object({
+    title: z.string(),
+    description: z.string().optional(),
+  })),
+
+  // Enum from Figma variants
+  variant: z.enum(["default", "compact", "wide"]).default("default"),
+
+  // Icon from sprite
+  icon: z.string().optional(),
+});
+
+export type {Name}Props = z.infer<typeof {name}PropsSchema>;
+
+export const {name}Block = defineBlock({
+  type: "{name}",
+  propsSchema: {name}PropsSchema,
+  renderHtml: render{Name},
+  sourceFile: import.meta.url,
+});
+```
+
+## CSS Class Conventions
+
+```css
+/* Section wrapper */
+.section--{blockName} {
+  /* Block-specific section styles */
+}
+
+/* Elements within block */
+.{blockName}__content { }
+.{blockName}__headline { }
+.{blockName}__image { }
+.{blockName}__actions { }
+
+/* Modifiers */
+.{blockName}--compact { }
+.{blockName}--wide { }
+```
+
+## Reuse Existing Components (CRITICAL)
+
+**BEFORE creating any new CSS class**, grep `styles.css` for existing patterns. If a Figma element looks like something that exists, USE IT.
+
+### Composition Over Creation
+
+When implementing a new block, break it into sub-patterns and check each one:
+
+1. **Identify sub-patterns** in the Figma design (header area, card grid, form, etc.)
+2. **Check if an existing BLOCK can handle the sub-pattern** (e.g., `sectionHeader` for headers)
+3. **Prefer page-level composition** over embedding duplicated patterns in new blocks
+4. **Search CSS** for reusable classes: `grep "pattern" src/public/css/styles.css`
+5. **Only create new classes** for truly block-specific styling
+
+### Page-Level Block Composition
+
+When a Figma section has multiple distinct parts (e.g., header + carousel), prefer composing at the page level:
+
+```typescript
+// GOOD: Compose existing blocks at page level
+{
+  id: "reference-header",
+  type: "sectionHeader",  // Reuse existing block
+  props: { headline, body, cta },
+  layout: { tone: "raised" },
+},
+{
+  id: "reference-carousel",
+  type: "reference",  // New block handles ONLY the unique part
+  props: { items },
+  layout: { tone: "raised" },  // Same tone = visual continuity
+}
+
+// BAD: Duplicate header pattern inside new block
+{
+  id: "reference",
+  type: "reference",
+  props: { headline, body, cta, items },  // Header duplicated
+}
+```
+
+Use CSS `+ .section--tone-X` selectors to handle spacing between consecutive same-tone sections.
+
+### Shared Component Patterns
+
+| Pattern                                 | Existing Classes                                                          | Don't Recreate As                              |
+| --------------------------------------- | ------------------------------------------------------------------------- | ---------------------------------------------- |
+| Section header with headline + body     | `.section__header`, `.section__header--split`, `.section-header__content` | `.{block}__header`, `.{block}__header-content` |
+| Headline + description with gold border | `.section-header__content` + `.prose`                                     | `.{block}__headline`, `.{block}__body`         |
+| Card with image + title + subtitle      | `.card`, `.card__image`, `.card__body`, `.card__title`, `.card__subtitle` | `.{block}__card`, `.{block}__card-image`       |
+| Grid of items                           | `.grid`, `.grid--{n}`                                                     | `.{block}__grid`                               |
+| Button styles                           | `.btn`, `.btn--primary`, `.btn--outline`, etc.                            | `.{block}__button`                             |
+
+### Available Shared Classes
+
+- **Layout**: `.container`, `.container--narrow`, `.container--wide`
+- **Section structure**: `.section__header`, `.section__header--split`, `.section__footer`
+- **Typography**: `h1`-`h3`, `.text-body`, `.eyebrow`, `.prose`
+- **Buttons**: `.btn`, `.btn--primary`, `.btn--secondary`, `.btn--outline`, `.btn--gold`, `.btn--outline-dark`
+- **Grids**: `.grid`, `.grid--2`, `.grid--3`, `.grid--4`, `.grid--5`
+- **Cards**: `.card`, `.card__image`, `.card__body`, `.card__title`, `.card__subtitle`
+- **Section tones**: `.section--tone-surface`, `.section--tone-raised`, `.section--tone-accent`, `.section--tone-inverted`
+
+## Validation Checklist
+
+Before completing a Figma → Code implementation:
+
+- [ ] Used `get_design_context` AND `get_screenshot` before coding
+- [ ] **GREPPED `styles.css` for existing patterns before creating new classes**
+- [ ] **Checked existing `.block.html` files for similar sub-patterns**
+- [ ] Created `.block.ts` with Zod schema matching Figma layers
+- [ ] Created `.block.html` with semantic HTML and Vue-like directives
+- [ ] Composed from existing classes where possible (`.section__header`, `.card`, `.prose`, etc.)
+- [ ] Only added block-specific CSS for truly unique elements
+- [ ] Used existing design tokens—no hardcoded colors/spacing
+- [ ] SVGs extracted to `public/svg/` and added to sprite
+- [ ] Exported block from `src/blocks/index.ts`
+- [ ] Registered block in `registerAllBlocks()`
+- [ ] Visual output matches Figma screenshot
+
+## Related Rules
+
+For detailed guidance on specific tasks, see:
+
+- `figma-mcp-block-extraction.mdc` — Figma layer → Zod schema mapping
+- `figma-mcp-design-tokens.mdc` — Design token extraction and CSS conventions
+- `figma-mcp-svg-extraction.mdc` — SVG cleanup and sprite integration
