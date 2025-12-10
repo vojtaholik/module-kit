@@ -42,6 +42,7 @@ export {
   blockRegistry,
   escapeHtml,
   escapeAttr,
+  renderSlot,
   type RenderContext,
   type RenderBlockInput,
   type BlockDefinition,
