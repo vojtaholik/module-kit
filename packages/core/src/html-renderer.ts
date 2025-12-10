@@ -93,9 +93,9 @@ export async function renderPage(
     // Update <html> attributes
     if (node.nodeName === "html") {
       setAttr(node, "data-page-id", page.id);
-      if (page.density) {
-        setAttr(node, "data-density", page.density);
-      }
+      // if (page.density) {
+      //   setAttr(node, "data-density", page.density);
+      // }
     }
 
     // Process regions - inject a marker that we'll replace after serialization

@@ -19,6 +19,7 @@ import {
   type PageConfig,
 } from "@static-block-kit/core";
 import { loadConfig, resolvePath } from "../config-loader.ts";
+import { processCSS } from "../css-processor.ts";
 
 const cwd = process.cwd();
 const config = await loadConfig(cwd);
@@ -270,6 +271,18 @@ Bun.serve({
         const filePath = join(publicDir, relativePath);
         const file = Bun.file(filePath);
         if (await file.exists()) {
+          // Process CSS through lightningcss (no minification in dev)
+          if (filePath.endsWith(".css")) {
+            const cssBytes = new Uint8Array(await file.arrayBuffer());
+            const result = processCSS({
+              filename: filePath,
+              code: cssBytes,
+              minify: false,
+            });
+            return new Response(new TextDecoder().decode(result.code), {
+              headers: { "Content-Type": "text/css" },
+            });
+          }
           return new Response(file);
         }
       }

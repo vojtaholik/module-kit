@@ -18,6 +18,7 @@ import {
   type PageConfig,
 } from "@static-block-kit/core";
 import { loadConfig, resolvePath } from "../config-loader.ts";
+import { processCSS } from "../css-processor.ts";
 
 const cwd = process.cwd();
 const config = await loadConfig(cwd);
@@ -87,8 +88,21 @@ async function build() {
     const bunFile = Bun.file(srcFile);
     if (await bunFile.exists()) {
       await mkdir(dirname(destFile), { recursive: true });
-      await Bun.write(destFile, await bunFile.arrayBuffer());
-      console.log(`  ✓ ${config.publicPath}/${file}`);
+
+      // Process CSS files through lightningcss
+      if (file.endsWith(".css")) {
+        const cssBytes = new Uint8Array(await bunFile.arrayBuffer());
+        const result = processCSS({
+          filename: srcFile,
+          code: cssBytes,
+          minify: true,
+        });
+        await Bun.write(destFile, result.code);
+        console.log(`  ✓ ${config.publicPath}/${file} (minified)`);
+      } else {
+        await Bun.write(destFile, await bunFile.arrayBuffer());
+        console.log(`  ✓ ${config.publicPath}/${file}`);
+      }
     }
   }
 

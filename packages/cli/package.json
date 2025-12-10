@@ -5,9 +5,13 @@
   "bin": {
     "static-block-kit": "./src/cli.ts"
   },
-  "files": ["src"],
+  "files": [
+    "src"
+  ],
   "dependencies": {
-    "@static-block-kit/core": "workspace:*"
+    "@static-block-kit/core": "workspace:*",
+    "lightningcss": "^1.28.2",
+    "browserslist": "^4.24.4"
   },
   "peerDependencies": {
     "typescript": "^5"
