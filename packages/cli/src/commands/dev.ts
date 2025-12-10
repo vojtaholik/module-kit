@@ -20,6 +20,7 @@ import {
 } from "@static-block-kit/core";
 import { loadConfig, resolvePath } from "../config-loader.ts";
 import { processCSS } from "../css-processor.ts";
+import { compileSpritesheet } from "../sprite-compiler.ts";
 
 const cwd = process.cwd();
 const config = await loadConfig(cwd);
@@ -27,6 +28,7 @@ const config = await loadConfig(cwd);
 const blocksDir = resolvePath(config, "blocksDir", cwd);
 const pagesDir = resolvePath(config, "pagesDir", cwd);
 const publicDir = resolvePath(config, "publicDir", cwd);
+const svgDir = join(publicDir, "svg");
 
 // Compile block templates before importing blocks (gen/ may not exist yet)
 console.log("🔨 Compiling block templates...");
@@ -34,6 +36,20 @@ await compileBlockTemplates({
   blocksDir,
   genDir: join(blocksDir, "gen"),
 });
+
+// Compile SVG spritesheet if svg/ directory exists
+try {
+  console.log("🎨 Compiling SVG spritesheet...");
+  const { count } = await compileSpritesheet({ publicDir });
+  if (count === 0) {
+    console.log("   (no SVGs found in svg/)");
+  }
+} catch (err) {
+  if ((err as NodeJS.ErrnoException).code !== "ENOENT") {
+    console.warn("   ⚠ Sprite compilation failed:", err);
+  }
+  // svg/ directory doesn't exist, skip silently
+}
 
 // Dynamically import site's blocks and pages
 const blocksModule = await import(join(blocksDir, "index.ts"));
@@ -104,11 +120,23 @@ function broadcastReload(type: "full" | "css" = "full") {
 }
 
 // Watch for file changes
-const watchDirs = [blocksDir, pagesDir, publicDir];
+const watchDirs = [blocksDir, pagesDir, publicDir, svgDir];
 
-async function handleFileChange(filename: string) {
+async function handleFileChange(filename: string, dir: string) {
   // Ignore generated files
   if (filename.includes("/gen/") || filename.endsWith(".render.ts")) return;
+
+  // SVG in svg/ directory changed - recompile spritesheet
+  if (filename.endsWith(".svg") && dir === svgDir) {
+    console.log(`🎨 SVG changed: ${filename}`);
+    try {
+      await compileSpritesheet({ publicDir });
+      broadcastReload("css"); // No full reload needed for SVG sprites
+    } catch (err) {
+      console.warn("   ⚠ Sprite compilation failed:", err);
+    }
+    return;
+  }
 
   if (filename.endsWith(".css")) {
     broadcastReload("css");
@@ -137,7 +165,7 @@ for (const dir of watchDirs) {
   try {
     watch(dir, { recursive: true }, (event, filename) => {
       if (!filename) return;
-      handleFileChange(filename);
+      handleFileChange(filename, dir);
     });
   } catch {
     // Directory might not exist yet
@@ -280,10 +308,15 @@ Bun.serve({
               minify: false,
             });
             return new Response(new TextDecoder().decode(result.code), {
-              headers: { "Content-Type": "text/css" },
+              headers: {
+                "Content-Type": "text/css",
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+              },
             });
           }
-          return new Response(file);
+          return new Response(file, {
+            headers: { "Cache-Control": "no-cache, no-store, must-revalidate" },
+          });
         }
       }
 

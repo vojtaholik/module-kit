@@ -9,6 +9,7 @@
     "dev": "bun run --watch packages/cli/src/cli.ts dev",
     "build": "bun run packages/cli/src/cli.ts build",
     "gen": "bun run packages/cli/src/cli.ts gen",
+    "sprite": "bun run packages/cli/src/cli.ts sprite",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {

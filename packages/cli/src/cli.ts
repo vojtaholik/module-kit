@@ -1,11 +1,12 @@
 #!/usr/bin/env bun
 /**
  * Static Block Kit CLI
- * 
+ *
  * Commands:
- *   dev   - Start development server
- *   build - Build static site for production
- *   gen   - Compile block templates
+ *   dev    - Start development server
+ *   build  - Build static site for production
+ *   gen    - Compile block templates
+ *   sprite - Compile SVGs into spritesheet
  */
 
 const command = process.argv[2];
@@ -20,6 +21,9 @@ switch (command) {
   case "gen":
     await import("./commands/gen.ts");
     break;
+  case "sprite":
+    await import("./commands/sprite.ts");
+    break;
   case "--help":
   case "-h":
   case undefined:
@@ -33,6 +37,7 @@ Commands:
   dev     Start development server with hot reload
   build   Build static site for production
   gen     Compile block templates to render functions
+  sprite  Compile SVGs from svg/ into spritesheet
 
 Options:
   --help, -h  Show this help message

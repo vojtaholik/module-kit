@@ -555,6 +555,9 @@ select {
   font-size: var(--text-xl);
   font-weight: 700;
   color: var(--color-text);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
   text-decoration: none;
 }
 

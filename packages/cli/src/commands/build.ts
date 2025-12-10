@@ -19,6 +19,7 @@ import {
 } from "@static-block-kit/core";
 import { loadConfig, resolvePath } from "../config-loader.ts";
 import { processCSS } from "../css-processor.ts";
+import { compileSpritesheet } from "../sprite-compiler.ts";
 
 const cwd = process.cwd();
 const config = await loadConfig(cwd);
@@ -45,6 +46,18 @@ async function build() {
     blocksDir,
     genDir: join(blocksDir, "gen"),
   });
+
+  // Step 1.5: Compile SVG spritesheet
+  console.log("\n🎨 Compiling SVG spritesheet...");
+  try {
+    const { count } = await compileSpritesheet({ publicDir });
+    console.log(`  ✓ ${count} SVGs compiled`);
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== "ENOENT") {
+      throw err;
+    }
+    console.log("  ℹ No svg/ directory found, skipping");
+  }
 
   // Step 2: Import fresh modules (after template compilation)
   const blocksModule = await import(join(blocksDir, "index.ts"));
