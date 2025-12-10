@@ -8,17 +8,93 @@
   </head>
   <body>
     <header class="site-header">
-      <nav class="container">
-        <a href="/" class="site-header__logo">
-          <svg width="24" height="24">
-            <use href="public/sprite.svg#magic-wand"></use>
-          </svg>
-          Static Kit
-        </a>
-        <div class="site-header__nav">
-          <a href="/">Home</a>
-          <a href="/about">About</a>
-          <a href="/blog">Blog</a>
+      <nav class="">
+        <div class="site-header__tagline">Intenzivní prvky bydlení</div>
+        <div class="site-header__content">
+          <div class="site-header__brand">
+            <a href="/" class="site-header__logo">
+              <img
+                src="public/images/logo.svg"
+                width="117"
+                height="44"
+                alt="JAP"
+              />
+            </a>
+          </div>
+          <div class="site-header__nav-container">
+            <ul class="site-header__nav">
+              <li>
+                <a href="/produkty" class="site-header__nav-item">
+                  Produkty
+                  <svg viewBox="0 0 8 5">
+                    <path
+                      d="M1 1l3 3 3-3"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      fill="none"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </a>
+              </li>
+              <li>
+                <a href="/showroomy" class="site-header__nav-item">Showroomy</a>
+              </li>
+              <li>
+                <a href="/reference" class="site-header__nav-item">Reference</a>
+              </li>
+              <li>
+                <a href="/o-nas" class="site-header__nav-item">
+                  O nás
+                  <svg viewBox="0 0 8 5">
+                    <path
+                      d="M1 1l3 3 3-3"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      fill="none"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </a>
+              </li>
+              <li>
+                <a href="/ke-stazeni" class="site-header__nav-item">
+                  Ke stažení
+                </a>
+              </li>
+              <li>
+                <a href="/kontakt" class="site-header__nav-item">Kontakt</a>
+              </li>
+            </ul>
+            <div class="site-header__actions">
+              <a href="/partneri" class="site-header__utility">
+                Partneři
+                <svg width="14" height="14">
+                  <use href="public/sprite.svg#avatar-outline" />
+                </svg>
+              </a>
+              <button
+                type="button"
+                class="site-header__icon-btn"
+                aria-label="Změnit jazyk"
+              >
+                CZ
+              </button>
+              <button
+                type="button"
+                class="site-header__icon-btn"
+                aria-label="Hledat"
+              >
+                <svg viewBox="0 0 16 16">
+                  <circle cx="7" cy="7" r="5" />
+                  <path d="M11 11l3.5 3.5" stroke-linecap="round" />
+                </svg>
+              </button>
+              <a href="/poptavka" class="site-header__cta">Poptávka</a>
+            </div>
+          </div>
         </div>
       </nav>
     </header>

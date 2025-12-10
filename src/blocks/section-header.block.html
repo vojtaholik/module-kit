@@ -1,0 +1,21 @@
+<section
+  class="section"
+  data-block-id="{{ addr.blockId }}"
+  data-schema-address="{{ encodeSchemaAddress(addr) }}"
+>
+  <div class="container container--wide">
+    <div class="section-header">
+      <template v-if="props.headline">
+        <h2 class="h2">{{ props.headline }}</h2>
+      </template>
+      <div class="prose" v-if="props.body">{{{ props.body }}}</div>
+      <template v-if="props.cta">
+        <div class="text-section__cta">
+          <a class="btn btn--primary" :href="props.cta.href">
+            {{ props.cta.label }}
+          </a>
+        </div>
+      </template>
+    </div>
+  </div>
+</section>

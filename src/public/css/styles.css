@@ -6,12 +6,23 @@
    Design Tokens
    -------------------------------------------------------------------------- */
 
+@font-face {
+  font-family: "PP Neue Machina";
+  font-weight: 700;
+  font-style: normal;
+  font-stretch: normal;
+  src: url("public/fonts/PP Neue Machina-Bold_inktrap.woff2") format("woff2"),
+    url("public/fonts/PP Neue Machina-Bold_inktrap.woff") format("woff"),
+    url("public/fonts/PP Neue Machina-Bold_inktrap.ttf") format("truetype");
+}
+
 :root {
   /* Colors */
   --color-bg: #ffffff;
   --color-bg-raised: #f8f9fa;
   --color-bg-accent: #1a1a2e;
   --color-bg-inverted: #0f0f1a;
+  --color-bg-header: #2d2d2d;
 
   --color-text: #1a1a2e;
   --color-text-muted: #6c757d;
@@ -22,6 +33,8 @@
   --color-primary-hover: #4f46e5;
   --color-secondary: #e2e8f0;
   --color-secondary-hover: #cbd5e1;
+  --color-gold: #b29a5e;
+  --color-gold-hover: #a08a52;
 
   --color-border: #e2e8f0;
   --color-border-inverted: #374151;
@@ -29,18 +42,58 @@
   /* Typography */
   --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, sans-serif;
+  --font-heading: "PP Neue Machina", system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
     "Liberation Mono", monospace;
 
-  --text-xs: 0.75rem;
-  --text-sm: 0.875rem;
-  --text-base: 1rem;
-  --text-lg: 1.125rem;
-  --text-xl: 1.25rem;
-  --text-2xl: 1.5rem;
-  --text-3xl: 1.875rem;
-  --text-4xl: 2.25rem;
-  --text-5xl: 3rem;
+  --text-8xl: clamp(3rem, 2.75rem + 0.75vw, 3.5rem); /* 48px to 56px */
+  --text-8xl--line-height: 1.1;
+  --text-8xl--letter-spacing: -0.02em;
+
+  --text-7xl: clamp(2.5rem, 2.25rem + 0.75vw, 3rem); /* 40px to 48px */
+  --text-7xl--line-height: 1.1;
+  --text-7xl--letter-spacing: -0.02em;
+
+  --text-6xl: clamp(2.25rem, 2rem + 0.75vw, 2.75rem); /* 36px to 44px */
+  --text-6xl--line-height: 1.1;
+  --text-6xl--letter-spacing: -0.02em;
+
+  --text-5xl: clamp(2rem, 2rem + 1vw, 2.5rem); /* 32px to 40px */
+  --text-5xl--line-height: 1.1;
+  --text-5xl--letter-spacing: -0.02em;
+
+  --text-4xl: clamp(1.688rem, 1.35rem + 1.13vw, 2.25rem); /* 27px to 36px */
+  --text-4xl--line-height: 1.1;
+  --text-4xl--letter-spacing: -0.02em;
+
+  --text-3xl: clamp(1.5rem, 1.275rem + 0.75vw, 1.875rem); /* 24px to 30px */
+  --text-3xl--line-height: 1.2;
+  --text-3xl--letter-spacing: -0.02em;
+
+  --text-2xl: clamp(1.25rem, 1.1rem + 0.5vw, 1.5rem); /* 20px to 24px */
+  --text-2xl--line-height: 1.35;
+  --text-2xl--letter-spacing: -0.01em;
+
+  --text-xl: clamp(1.125rem, 1.05rem + 0.25vw, 1.25rem); /* 18px to 20px */
+  --text-xl--line-height: 1.4;
+  --text-xl--letter-spacing: 0;
+
+  --text-lg: clamp(1rem, 0.925rem + 0.25vw, 1.125rem); /* 16px to 18px */
+  --text-lg--line-height: 1.5;
+  --text-lg--letter-spacing: 0;
+
+  --text-base: 1rem; /* 16px */
+  --text-base--line-height: 1.5;
+  --text-base--letter-spacing: 0;
+
+  --text-sm: 0.875rem; /* 14px */
+  --text-sm--line-height: 1.4;
+  --text-sm--letter-spacing: 0;
+
+  --text-xs: 0.75rem; /* 12px */
+  --text-xs--line-height: 1.3;
+  --text-xs--letter-spacing: 0;
 
   --leading-tight: 1.25;
   --leading-normal: 1.5;
@@ -81,7 +134,9 @@
   /* Container widths */
   --container-narrow: 42rem;
   --container-default: 64rem;
-  --container-wide: 80rem;
+  --container-wide: 1600px;
+
+  --nav-height: 96px;
 }
 
 /* Density-based spacing */
@@ -152,27 +207,33 @@ select {
    Typography
    -------------------------------------------------------------------------- */
 
-.h1 {
-  font-size: var(--text-5xl);
+h1 {
+  font-family: var(--font-heading);
+  font-size: var(--text-7xl);
   font-weight: 700;
   line-height: var(--leading-tight);
   letter-spacing: -0.02em;
+  text-transform: uppercase;
 }
 
-.h2 {
-  font-size: var(--text-3xl);
-  font-weight: 600;
+h2 {
+  font-family: var(--font-heading);
+  font-size: var(--text-5xl);
+  font-weight: 700;
   line-height: var(--leading-tight);
   letter-spacing: -0.01em;
+  text-transform: uppercase;
 }
 
 .h3 {
-  font-size: var(--text-xl);
+  font-family: var(--font-heading);
+  font-size: var(--text-4xl);
   font-weight: 600;
   line-height: var(--leading-tight);
 }
 
 .text-body {
+  font-family: var(--font-sans);
   font-size: var(--text-lg);
   line-height: var(--leading-relaxed);
   color: var(--color-text-muted);
@@ -411,40 +472,51 @@ select {
    -------------------------------------------------------------------------- */
 
 .section--hero {
-  padding: var(--space-24) 0;
+  position: relative;
+  padding: 0;
+  height: calc(100svh - var(--nav-height));
+  display: flex;
+  align-items: end;
+  justify-content: start;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.section--hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background-image: linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 1) -10%,
+      rgba(0, 0, 0, 0) 55%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(45, 45, 45, 0) 0%,
+      rgba(48, 48, 48, 0) 47.12%,
+      #000 100%
+    );
 }
 
 .hero__content {
+  position: relative;
+  z-index: 10;
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
-}
-
-.hero__content--left {
-  align-items: flex-start;
-  text-align: left;
-}
-
-.hero__content--center {
-  align-items: center;
-  text-align: center;
-}
-
-.hero__content--split {
-  align-items: flex-start;
-  text-align: left;
+  padding-bottom: var(--space-24);
 }
 
 .hero__headline {
   max-width: 20ch;
-}
-
-.hero__content--center .hero__headline {
-  max-width: none;
-}
-
-.hero__subheadline {
-  max-width: 50ch;
+  text-transform: uppercase;
+  color: var(--color-text-accent);
+  font-size: var(--text-8xl);
+  text-wrap: balance;
+  line-height: var(--text-8xl--line-height);
 }
 
 .hero__actions {
@@ -452,34 +524,40 @@ select {
   gap: var(--space-4);
   flex-wrap: wrap;
   margin-top: var(--space-4);
+  a {
+  }
 }
 
 /* --------------------------------------------------------------------------
-   Text Section
+   Section Header
    -------------------------------------------------------------------------- */
 
-.text-section {
+.section-header {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
 }
 
-.text-section--left {
+.section-header .prose {
+  max-width: 50ch;
+  text-wrap: balance;
+  color: var(--color-text-muted);
+  border-left: 4px solid var(--color-gold);
+  padding-left: var(--space-6);
+}
+
+.section-header--left {
   align-items: flex-start;
   text-align: left;
 }
 
-.text-section--center {
+.section-header--center {
   align-items: center;
   text-align: center;
 }
 
-.text-section--center .prose {
+.section-header--center .prose {
   text-align: left;
-}
-
-.text-section__cta {
-  margin-top: var(--space-6);
 }
 
 /* --------------------------------------------------------------------------
@@ -505,6 +583,11 @@ select {
   transform: scale(0.98);
 }
 
+.btn--sm {
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+}
+
 .btn--primary {
   background: var(--color-primary);
   color: white;
@@ -521,6 +604,16 @@ select {
 
 .btn--secondary:hover {
   background: var(--color-secondary-hover);
+}
+
+.btn--outline {
+  border: 1px solid var(--color-text-accent);
+  color: var(--color-text-accent);
+  background: transparent;
+}
+.btn--outline:hover {
+  background: var(--color-text-accent);
+  color: var(--color-bg-accent);
 }
 
 /* Light buttons for dark backgrounds */
@@ -541,40 +634,213 @@ select {
    -------------------------------------------------------------------------- */
 
 .site-header {
-  padding: var(--space-4) 0;
-  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-header);
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  height: var(--nav-height);
 }
 
 .site-header nav {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  height: 100%;
   justify-content: space-between;
+  width: 100%;
+  margin: 0 auto;
+  padding-left: var(--space-6);
+  max-width: var(--container-wide);
+  padding-bottom: var(--space-3);
+}
+
+.site-header__content {
+  display: flex;
+  align-items: center;
+
+  width: 100%;
+}
+
+/* Logo area */
+.site-header__brand {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.site-header__tagline {
+  display: flex;
+  gap: var(--space-3);
+  font-family: var(--font-heading);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  align-items: center;
+  color: var(--color-gold);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.site-header__tagline:after {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 30px;
+  background: var(--color-gold);
+  border-radius: 0 0 0 30px;
 }
 
 .site-header__logo {
-  font-size: var(--text-xl);
-  font-weight: 700;
-  color: var(--color-text);
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
+  display: flex;
+  align-items: flex-end;
   text-decoration: none;
 }
 
+.site-header__logo img,
+.site-header__logo svg {
+  flex-shrink: 0;
+}
+
+.site-header__nav-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding-right: var(--space-6);
+  padding-left: 3.5rem;
+}
+
+/* Main navigation */
 .site-header__nav {
   display: flex;
-  gap: var(--space-6);
+  align-items: center;
+  gap: 40px;
+  list-style: none;
 }
 
-.site-header__nav a {
-  color: var(--color-text-muted);
+.site-header__nav-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-text-inverted);
   text-decoration: none;
+  font-size: 16px;
   font-weight: 500;
-  transition: color var(--transition-fast);
+  line-height: 1.5;
+  transition: opacity var(--transition-fast);
 }
 
-.site-header__nav a:hover {
-  color: var(--color-text);
+.site-header__nav-item:hover {
+  opacity: 0.8;
+}
+
+.site-header__nav-item svg {
+  width: 8px;
+  height: 5px;
+  fill: currentColor;
+}
+
+/* Right side utilities */
+.site-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.site-header__utility {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-inverted);
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: 500;
+  transition: opacity var(--transition-fast);
+}
+
+.site-header__utility:hover {
+  opacity: 0.8;
+}
+
+.site-header__utility svg {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+.site-header__icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 0 0 0 3px;
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  color: var(--color-text-inverted);
+  cursor: pointer;
+  transition: background var(--transition-fast),
+    border-color var(--transition-fast);
+  position: relative;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: var(--text-sm);
+  text-align: center;
+}
+
+.site-header__icon-btn::after {
+  content: "";
+  position: absolute;
+  left: -2px;
+  z-index: 10;
+  bottom: 0px;
+  width: 10px;
+  height: 2px;
+  background: var(--color-bg-header);
+  /* background: red; */
+}
+
+.site-header__icon-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.site-header__icon-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+.site-header__icon-btn img {
+  width: 20px;
+  height: 14px;
+  object-fit: cover;
+  border-radius: 2px;
+}
+
+/* CTA Button */
+.site-header__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  font-size: 16px;
+  font-weight: 500;
+  text-decoration: none;
+  border-radius: var(--radius-md);
+  background: var(--color-gold);
+  color: var(--color-bg-header);
+  border: 1px solid var(--color-gold);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.site-header__cta:hover {
+  background: var(--color-gold-hover);
+  border-color: var(--color-gold-hover);
 }
 
 /* --------------------------------------------------------------------------

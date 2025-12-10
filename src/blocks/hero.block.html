@@ -1,31 +1,22 @@
 <section
-  class="section section--hero section--tone-{{ ctx.layout.tone }}"
+  class="section section--hero"
+  style="background-image: url('{{ props.backgroundImage.src }}')"
   data-block-id="{{ addr.blockId }}"
   data-schema-address="{{ encodeSchemaAddress(addr) }}"
 >
-  <div class="container container--{{ ctx.layout.contentWidth }}">
-    <div class="hero__content hero__content--{{ ctx.layout.contentAlign }}">
-      <template v-if="props.eyebrow">
-        <span class="eyebrow">{{ props.eyebrow }}</span>
-      </template>
-      <h1 class="h1 hero__headline">{{ props.headline }}</h1>
-      <template v-if="props.subheadline">
-        <p class="text-body hero__subheadline">{{ props.subheadline }}</p>
-      </template>
-      <template v-if="props.primaryCta || props.secondaryCta">
-        <div class="hero__actions">
-          <template v-if="props.primaryCta">
-            <a class="btn btn--primary" :href="props.primaryCta.href">
-              {{ props.primaryCta.label }}
-            </a>
-          </template>
-          <template v-if="props.secondaryCta">
-            <a class="btn btn--secondary" :href="props.secondaryCta.href">
-              {{ props.secondaryCta.label }}
-            </a>
-          </template>
-        </div>
-      </template>
+  <div class="container container--wide">
+    <div class="hero__content">
+      <h1 class="hero__headline">{{ props.title }}</h1>
+      <div class="hero__actions">
+        <a
+          v-for="link in props.links"
+          :key="link.href"
+          class="btn btn--sm btn--outline"
+          :href="link.href"
+        >
+          {{ link.label }}
+        </a>
+      </div>
     </div>
   </div>
 </section>

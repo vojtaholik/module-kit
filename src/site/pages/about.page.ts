@@ -26,7 +26,7 @@ export const aboutPage: PageConfig = {
         },
         {
           id: "text-mission",
-          type: "textSection",
+          type: "sectionHeader",
           props: {
             eyebrow: "Our Mission",
             headline: "Simplicity Without Sacrifice",

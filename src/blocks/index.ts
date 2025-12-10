@@ -11,21 +11,21 @@ export {
   type LatestPostsProps,
 } from "./latest-posts.block.ts";
 export {
-  textSectionBlock,
-  textSectionPropsSchema,
-  type TextSectionProps,
-} from "./text-section.block.ts";
+  sectionHeaderBlock,
+  sectionHeaderPropsSchema,
+  type SectionHeaderProps,
+} from "./section-header.block.ts";
 
 // Register all blocks
 import { blockRegistry } from "@static-block-kit/core";
 import { heroBlock } from "./hero.block.ts";
 import { featureGridBlock } from "./feature-grid.block.ts";
 import { latestPostsBlock } from "./latest-posts.block.ts";
-import { textSectionBlock } from "./text-section.block.ts";
+import { sectionHeaderBlock } from "./section-header.block.ts";
 
 export function registerAllBlocks() {
   blockRegistry.register(heroBlock);
   blockRegistry.register(featureGridBlock);
   blockRegistry.register(latestPostsBlock);
-  blockRegistry.register(textSectionBlock);
+  blockRegistry.register(sectionHeaderBlock);
 }

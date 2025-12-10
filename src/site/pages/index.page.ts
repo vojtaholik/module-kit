@@ -1,7 +1,7 @@
 import type { PageConfig } from "@static-block-kit/core";
 
 export const indexPage: PageConfig = {
-  id: "home",
+  id: "index",
   path: "/",
   title: "JAP",
   template: "base.html",
@@ -13,23 +13,42 @@ export const indexPage: PageConfig = {
           id: "hero-1",
           type: "hero",
           props: {
-            eyebrow: "Introducing Static Kit",
-            headline: "Build Beautiful Static Sites",
-            subheadline:
-              "A modern static site generator with block-based content management and a Vue-like template DSL.",
-            primaryCta: {
-              href: "/docs/getting-started",
-              label: "Get Started",
-            },
-            secondaryCta: {
-              href: "/about",
-              label: "Learn More",
+            title: "Jednokřídlá stavební pouzdra",
+            links: [
+              {
+                href: "/poptavka",
+                label: "Nezávazně poptejte",
+              },
+              {
+                href: "/showroom",
+                label: "Navštivte showrooom",
+              },
+              {
+                href: "/prodejce",
+                label: "Najděte prodejce",
+              },
+            ],
+            backgroundImage: {
+              src: "public/images/hero.jpg",
+              alt: "Hero Background",
             },
           },
           layout: {
             tone: "accent",
             contentAlign: "center",
             contentWidth: "narrow",
+          },
+        },
+        {
+          id: "section-header-1",
+          type: "sectionHeader",
+          props: {
+            headline: "Elegantní řešení",
+            body: "<p>Jednokřídlé stavební pouzdro uplatníte při nové výstavbě či rekonstrukci. Je vhodné do obývacího pokoje, ložnice, kuchyně, komory, šatny, koupelny, toalety nebo pracovny.</p>",
+          },
+          // TODO: Add ability to have children within a block which calls another children, this way we can have a section as parent with different elements as children.
+          layout: {
+            contentAlign: "left",
           },
         },
         {
@@ -79,26 +98,20 @@ export const indexPage: PageConfig = {
               },
             ],
           },
-          layout: {
-            tone: "surface",
-            contentAlign: "center",
-          },
         },
         {
           id: "cta-1",
-          type: "textSection",
+          type: "sectionHeader",
           props: {
-            headline: "Ready to build?",
-            body: "<p>Get started with Static Kit in minutes. Install the CLI, create a new project, and start building beautiful static sites.</p>",
-            cta: {
-              href: "/docs/getting-started",
-              label: "Read the Docs",
+            headline: "Jednokřídlá stavební pouzdra",
+            body: "<p>Jednokřídlá stavební pouzdra jsou ideální pro domácnosti a malé firmy. Mají velkou vnitřní plochu a jsou velmi odolné.</p>",
+            image: {
+              src: "public/images/section-header.jpg",
+              alt: "Section Header Image",
             },
           },
           layout: {
-            tone: "raised",
-            contentAlign: "center",
-            contentWidth: "narrow",
+            contentAlign: "left",
           },
         },
       ],

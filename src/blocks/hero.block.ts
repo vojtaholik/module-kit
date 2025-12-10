@@ -3,9 +3,7 @@ import { defineBlock } from "@static-block-kit/core";
 import { renderHero } from "./gen/hero.render.ts";
 
 export const heroPropsSchema = z.object({
-  eyebrow: z.string().optional(),
-  headline: z.string(),
-  subheadline: z.string().optional(),
+  title: z.string(),
   primaryCta: z
     .object({
       href: z.string(),
@@ -13,13 +11,13 @@ export const heroPropsSchema = z.object({
       external: z.boolean().optional(),
     })
     .optional(),
-  secondaryCta: z
-    .object({
+  links: z.array(
+    z.object({
       href: z.string(),
       label: z.string(),
-      external: z.boolean().optional(),
+      external: z.boolean().optional().default(false),
     })
-    .optional(),
+  ),
   backgroundImage: z
     .object({
       src: z.string(),
