@@ -1,0 +1,15 @@
+{
+  "name": "static-kit-2",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "parse5": "^8.0.0",
+    "zod": "^4.1.13"
+  }
+}
