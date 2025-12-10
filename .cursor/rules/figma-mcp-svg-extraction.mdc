@@ -1,0 +1,276 @@
+---
+description: Rules for extracting SVGs from Figma using MCP and integrating with sprite system
+globs: "*.svg, public/sprite.svg, public/svg/*, *.block.html"
+alwaysApply: false
+---
+
+# Figma MCP SVG Extraction Rules
+
+When extracting SVGs from Figma using MCP (`get_design_context`, `get_screenshot`), follow this workflow to maintain a clean sprite-based icon system.
+
+## File Structure
+
+```
+public/
+├── svg/           # Individual source SVG files
+│   ├── icon-name.svg
+│   └── another-icon.svg
+└── sprite.svg     # Combined sprite with <symbol> elements
+```
+
+## Extraction Workflow
+
+### 1. Export SVG from Figma
+
+Use `get_design_context` to extract the SVG content from Figma.
+
+### 2. Save Individual SVG File
+
+Save to `public/svg/{icon-name}.svg`:
+
+- **Filename**: kebab-case, descriptive (e.g., `avatar-outline.svg`, `magic-wand.svg`, `arrow-right.svg`)
+- **No prefixes**: Don't use `icon-` or `svg-` prefixes
+- **Clean content**: Strip unnecessary wrapper attributes
+
+```svg
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+  <path stroke="currentColor" stroke-width="1.5" d="..."/>
+</svg>
+```
+
+### 3. Add to Sprite
+
+Add as a `<symbol>` in `public/sprite.svg`:
+
+```svg
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="display:none;">
+  <symbol id="icon-name" viewBox="0 0 24 24">
+    <!-- Inner content only - no wrapper <svg> -->
+    <path stroke="currentColor" stroke-width="1.5" d="..."/>
+  </symbol>
+</svg>
+```
+
+**Symbol requirements:**
+
+- `id` matches filename without `.svg` extension
+- `viewBox` copied from source SVG
+- Only inner content (paths, groups) - no outer `<svg>` wrapper
+- Remove `width`/`height` - controlled at usage site
+
+### 4. Use in Markup
+
+Reference via `<use>` element:
+
+```html
+<svg width="24" height="24">
+  <use href="public/sprite.svg#icon-name" />
+</svg>
+```
+
+Or with template variable for dynamic icons:
+
+```html
+<svg width="24" height="24">
+  <use href="public/sprite.svg#{{ props.icon }}" />
+</svg>
+```
+
+## SVG Cleanup Rules
+
+When extracting from Figma, clean the SVG:
+
+### Colors
+
+| Figma                      | Output SVG                             |
+| -------------------------- | -------------------------------------- |
+| Hardcoded fill `#141B34`   | `fill="currentColor"`                  |
+| Hardcoded stroke `#141B34` | `stroke="currentColor"`                |
+| White fills (decorative)   | Keep as `#fff` or `fill="white"`       |
+| Multi-color icons          | Keep specific colors, document in name |
+
+**Use `currentColor`** for icons that should inherit text color. This allows CSS styling:
+
+```css
+.icon--primary {
+  color: var(--color-primary);
+}
+.icon--muted {
+  color: var(--color-text-muted);
+}
+```
+
+### Attributes to Remove
+
+- `id` attributes on inner elements (Figma generates garbage IDs)
+- `data-*` attributes from Figma
+- Empty `<g>` wrappers with no transforms
+- `fill="none"` on the root (move to paths if needed)
+- `xmlns:xlink` on individual files (only needed on sprite root)
+
+### Attributes to Keep
+
+- `viewBox` (critical)
+- `fill-rule`, `clip-rule` when needed
+- `opacity` on specific elements
+- `stroke-width`, `stroke-linecap`, `stroke-linejoin`
+
+## Naming Conventions
+
+| Figma Layer Name    | SVG Filename         | Symbol ID        |
+| ------------------- | -------------------- | ---------------- |
+| `Icon/MagicWand`    | `magic-wand.svg`     | `magic-wand`     |
+| `Avatar Outline`    | `avatar-outline.svg` | `avatar-outline` |
+| `Icons/Arrow/Right` | `arrow-right.svg`    | `arrow-right`    |
+| `ChevronDown`       | `chevron-down.svg`   | `chevron-down`   |
+| `Social/Twitter`    | `social-twitter.svg` | `social-twitter` |
+
+- Strip `Icon/`, `Icons/` prefixes from Figma paths
+- Convert PascalCase → kebab-case
+- Flatten nested paths: `Arrow/Right` → `arrow-right`
+
+## Template Integration
+
+### Static Icon
+
+```html
+<svg class="icon" width="24" height="24" aria-hidden="true">
+  <use href="public/sprite.svg#magic-wand" />
+</svg>
+```
+
+### Dynamic Icon from Props
+
+In `.block.html` templates:
+
+```html
+<template v-if="props.icon">
+  <svg class="icon" width="24" height="24" aria-hidden="true">
+    <use href="public/sprite.svg#{{ props.icon }}" />
+  </svg>
+</template>
+```
+
+### Icon with Accessible Label
+
+```html
+<svg class="icon" width="24" height="24" role="img" aria-label="Search">
+  <use href="public/sprite.svg#search" />
+</svg>
+```
+
+### Sizing
+
+Control size via `width`/`height` attributes or CSS:
+
+```html
+<!-- Explicit size -->
+<svg width="16" height="16">
+  <use href="public/sprite.svg#chevron-down" />
+</svg>
+
+<!-- CSS-controlled (for responsive) -->
+<svg class="icon icon--lg">
+  <use href="public/sprite.svg#chevron-down" />
+</svg>
+```
+
+```css
+.icon {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+.icon--sm {
+  width: 1rem;
+  height: 1rem;
+}
+.icon--lg {
+  width: 2rem;
+  height: 2rem;
+}
+```
+
+## Sprite File Structure
+
+The `public/sprite.svg` file:
+
+```svg
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="display:none;">
+  <symbol id="magic-wand" viewBox="0 0 24 24">
+    <!-- magic-wand content -->
+  </symbol>
+  <symbol id="avatar-outline" viewBox="0 0 14 14">
+    <!-- avatar-outline content -->
+  </symbol>
+  <!-- Add new symbols here -->
+</svg>
+```
+
+**Order:** Alphabetical by ID for easy scanning.
+
+## Block Schema for Icons
+
+When a block has an icon prop:
+
+```ts
+// In .block.ts
+export const myBlockPropsSchema = z.object({
+  icon: z.string().optional(), // Sprite symbol ID
+  // ...
+});
+```
+
+Document available icons in the schema JSDoc:
+
+```ts
+/**
+ * Icon from sprite. Available: magic-wand, avatar-outline, arrow-right, etc.
+ * @see public/sprite.svg for full list
+ */
+icon: z.string().optional(),
+```
+
+## Validation Checklist
+
+Before committing SVG extractions:
+
+- [ ] Individual SVG saved to `public/svg/{name}.svg`
+- [ ] Symbol added to `public/sprite.svg` with matching ID
+- [ ] Colors converted to `currentColor` where appropriate
+- [ ] Figma garbage attributes stripped
+- [ ] `viewBox` preserved on symbol
+- [ ] Symbol ID is kebab-case, no prefixes
+- [ ] Usage in markup uses `<use href="public/sprite.svg#id">`
+- [ ] Width/height specified at usage site, not in symbol
+
+## Anti-Patterns
+
+### Don't inline SVG content in templates
+
+```html
+<!-- ✗ Bad - bloats HTML, not reusable -->
+<svg viewBox="0 0 24 24">
+  <path d="M10.938 11.077..." />
+</svg>
+
+<!-- ✓ Good - references sprite -->
+<svg width="24" height="24">
+  <use href="public/sprite.svg#magic-wand" />
+</svg>
+```
+
+### Don't use img tags for icons
+
+```html
+<!-- ✗ Bad - no color inheritance, extra request -->
+<img src="public/svg/magic-wand.svg" alt="" />
+
+<!-- ✓ Good - inherits color, single sprite request -->
+<svg width="24" height="24">
+  <use href="public/sprite.svg#magic-wand" />
+</svg>
+```
+
+### Don't duplicate icons in sprite
+
+Check if symbol ID already exists before adding. If icon is similar but different, use a descriptive suffix: `arrow-right`, `arrow-right-bold`.

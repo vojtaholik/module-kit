@@ -2,7 +2,13 @@ import { z } from "zod/v4";
 
 // Layout enums - design system tokens for blocks
 export const toneEnum = z.enum(["surface", "raised", "accent", "inverted"]);
-export const contentAlignEnum = z.enum(["left", "center", "split"]);
+export const contentAlignEnum = z.enum([
+  "left",
+  "center",
+  "right",
+  "split-start",
+  "split-end",
+]);
 export const densityEnum = z.enum(["compact", "comfortable", "relaxed"]);
 export const contentWidthEnum = z.enum(["narrow", "default", "wide"]);
 
