@@ -244,10 +244,21 @@ function compileElement(element: Element, indent: number): string {
   }
 
   // Handle dynamic attributes with :
+  // Framework directives that should be stripped (not rendered as HTML attributes)
+  const frameworkDirectives = new Set(["key"]);
+
   for (const attr of attrs) {
     if (attr.name.startsWith(":")) {
       const attrName = attr.name.slice(1);
-      code += `${pad}out += " ${attrName}=\\"" + escapeAttr(${attr.value}) + "\\"";\n`;
+      // Skip framework directives like :key
+      if (frameworkDirectives.has(attrName)) {
+        continue;
+      }
+      // Conditionally render attribute only if value is truthy
+      code += `${pad}const _${attrName}Val = ${attr.value};\n`;
+      code += `${pad}if (_${attrName}Val) {\n`;
+      code += `${pad}  out += " ${attrName}=\\"" + escapeAttr(_${attrName}Val) + "\\"";\n`;
+      code += `${pad}}\n`;
     }
   }
 

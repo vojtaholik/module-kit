@@ -114,6 +114,12 @@ function broadcastReload(type: "full" | "css" = "full") {
       try {
         controller.enqueue(data);
       } catch {
+        // Clean up both client and heartbeat when controller fails
+        const heartbeat = sseHeartbeats.get(controller);
+        if (heartbeat) {
+          clearInterval(heartbeat);
+          sseHeartbeats.delete(controller);
+        }
         sseClients.delete(controller);
       }
     }

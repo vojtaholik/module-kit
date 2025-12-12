@@ -13,10 +13,8 @@ export const aboutPage: PageConfig = {
           id: "hero-about",
           type: "hero",
           props: {
-            eyebrow: "About",
-            headline: "The Philosophy Behind Static Kit",
-            subheadline:
-              "We believe static sites should be fast, maintainable, and a joy to build.",
+            title: "The Philosophy Behind Static Kit",
+            links: [],
           },
           layout: {
             tone: "surface",

@@ -1,6 +1,6 @@
 <section
   class="section section--hero section--tone-{{ ctx.layout.tone }}"
-  style="background-image: url('{{ props.backgroundImage.src }}')"
+  :style="props.backgroundImage ? 'background-image: url(' + props.backgroundImage.src + ')' : ''"
   data-block-id="{{ addr.blockId }}"
   data-schema-address="{{ encodeSchemaAddress(addr) }}"
 >
