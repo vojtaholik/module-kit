@@ -32,6 +32,12 @@ export {
   type CarouselProps,
   type CarouselItem,
 } from "./carousel.block.ts";
+export {
+  bentoShowcaseBlock,
+  bentoShowcasePropsSchema,
+  type BentoShowcaseProps,
+  type BentoItem,
+} from "./bento-showcase.block.ts";
 
 // Register all blocks
 import { blockRegistry } from "@static-block-kit/core";
@@ -43,6 +49,7 @@ import { gridBlock } from "./grid.block.ts";
 import { teaserBlock } from "./teaser.block.ts";
 import { businessCardBlock } from "./business-card.block.ts";
 import { carouselBlock } from "./carousel.block.ts";
+import { bentoShowcaseBlock } from "./bento-showcase.block.ts";
 
 export function registerAllBlocks() {
   blockRegistry.register(heroBlock);
@@ -53,4 +60,5 @@ export function registerAllBlocks() {
   blockRegistry.register(teaserBlock);
   blockRegistry.register(businessCardBlock);
   blockRegistry.register(carouselBlock);
+  blockRegistry.register(bentoShowcaseBlock);
 }

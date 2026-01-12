@@ -21,7 +21,7 @@
   --color-bg: #ffffff;
   --color-bg-raised: #f8f9fa;
   --color-bg-accent: #1a1a2e;
-  --color-bg-inverted: #0f0f1a;
+  --color-bg-inverted: #2d2d2d;
   --color-bg-gray: #2d2d2d;
 
   --color-text: #1a1a2e;
@@ -669,6 +669,14 @@ main {
   padding-top: 0;
 }
 
+.section--tone-inverted + .section--tone-inverted {
+  padding-top: 0;
+}
+
+.section--tone-accent + .section--tone-accent {
+  padding-top: 0;
+}
+
 .section--tone-surface + .section--tone-surface {
   padding-top: 0;
 }
@@ -1164,6 +1172,19 @@ main {
   color: var(--color-bg);
 }
 
+/* Override outline-dark on inverted/dark sections */
+.section--tone-inverted .btn--outline-dark,
+.section--tone-accent .btn--outline-dark {
+  color: var(--color-text-inverted);
+  border-color: var(--color-text-inverted);
+}
+
+.section--tone-inverted .btn--outline-dark:hover,
+.section--tone-accent .btn--outline-dark:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-text-inverted);
+}
+
 .carousel {
   display: flex;
   gap: var(--space-4);
@@ -1326,5 +1347,152 @@ main {
 @media (max-width: 640px) {
   .carousel__card--reference {
     width: 280px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Bento Showcase
+   -------------------------------------------------------------------------- */
+
+.bento-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: var(--space-4);
+  min-height: 650px;
+}
+
+.bento-card {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  text-decoration: none;
+}
+
+.bento-card--featured {
+  grid-row: span 2;
+}
+
+.bento-card__image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--transition-slow);
+}
+
+.bento-card:hover .bento-card__image {
+  transform: scale(1.03);
+}
+
+.bento-card__caption {
+  position: absolute;
+  bottom: var(--space-4);
+  left: var(--space-4);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  background: var(--color-bg-gray);
+  max-width: 480px;
+}
+
+.bento-card__text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.bento-card__title {
+  font-family: var(--font-heading);
+  font-size: var(--text-xl);
+  line-height: var(--text-xl--line-height);
+  color: var(--color-gold);
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.bento-card__description {
+  font-size: var(--text-base);
+  line-height: var(--leading-tight);
+  color: var(--color-text-inverted);
+  margin: 0;
+}
+
+.bento-card__arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--color-text-inverted);
+  border-radius: var(--radius-full);
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.bento-card__arrow .icon {
+  --stroke-0: var(--color-text-inverted);
+  transform: rotate(-45deg);
+  transition: transform var(--transition-fast);
+}
+
+.bento-card:hover .bento-card__arrow {
+  background: var(--color-text-inverted);
+  border-color: var(--color-text-inverted);
+}
+
+.bento-card:hover .bento-card__arrow .icon {
+  --stroke-0: var(--color-bg-gray);
+  transform: rotate(0deg);
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .bento-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    min-height: auto;
+  }
+
+  .bento-card--featured {
+    grid-row: span 1;
+    min-height: 400px;
+  }
+
+  .bento-card:not(.bento-card--featured) {
+    min-height: 300px;
+  }
+
+  .bento-card__caption {
+    right: var(--space-4);
+    max-width: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .bento-card--featured {
+    min-height: 320px;
+  }
+
+  .bento-card:not(.bento-card--featured) {
+    min-height: 260px;
+  }
+
+  .bento-card__caption {
+    left: var(--space-3);
+    right: var(--space-3);
+    bottom: var(--space-3);
+    padding: var(--space-4);
+  }
+
+  .bento-card__title {
+    font-size: var(--text-lg);
+  }
+
+  .bento-card__description {
+    font-size: var(--text-sm);
   }
 }

@@ -1,0 +1,57 @@
+<section
+  class="section section--tone-{{ ctx.layout.tone }}"
+  data-block-id="{{ addr.blockId }}"
+  data-schema-address="{{ encodeSchemaAddress(addr) }}"
+>
+  <div class="container container--wide">
+    <div class="bento-grid">
+      <!-- Featured item (large, spans 2 rows) -->
+      <a class="bento-card bento-card--featured" :href="props.featured.href">
+        <img
+          class="bento-card__image"
+          :src="props.featured.image.src"
+          :alt="props.featured.image.alt"
+          loading="lazy"
+        />
+        <div class="bento-card__caption">
+          <div class="bento-card__text">
+            <h3 class="bento-card__title">{{ props.featured.title }}</h3>
+            <template v-if="props.featured.description">
+              <p class="bento-card__description">{{ props.featured.description }}</p>
+            </template>
+          </div>
+          <span class="bento-card__arrow" aria-hidden="true">
+            <svg class="icon" width="12" height="12">
+              <use href="public/sprite.svg#arrow-right" />
+            </svg>
+          </span>
+        </div>
+      </a>
+
+      <!-- Secondary items -->
+      <template v-for="item in props.items">
+        <a class="bento-card" :href="item.href">
+          <img
+            class="bento-card__image"
+            :src="item.image.src"
+            :alt="item.image.alt"
+            loading="lazy"
+          />
+          <div class="bento-card__caption">
+            <div class="bento-card__text">
+              <h3 class="bento-card__title">{{ item.title }}</h3>
+              <template v-if="item.description">
+                <p class="bento-card__description">{{ item.description }}</p>
+              </template>
+            </div>
+            <span class="bento-card__arrow" aria-hidden="true">
+              <svg class="icon" width="12" height="12">
+                <use href="public/sprite.svg#arrow-right" />
+              </svg>
+            </span>
+          </div>
+        </a>
+      </template>
+    </div>
+  </div>
+</section>

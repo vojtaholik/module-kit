@@ -14,8 +14,70 @@ These rules define the required workflow and conventions for translating Figma d
 2. **If response is truncated**, run `get_metadata` to get the high-level node map, then re-fetch only the required node(s)
 3. **Run `get_screenshot`** for a visual reference of the node/variant being implemented
 4. **Only after both `get_design_context` AND `get_screenshot`**, download any assets and start implementation
-5. **Translate the output** into static-kit conventions (NOT React/Tailwind—see Project Conventions below)
-6. **Validate against Figma** for 1:1 visual parity before marking complete
+5. **STOP AND ASK before creating anything new** — see "Mandatory Ask Before Creating" below
+6. **Translate the output** into static-kit conventions (NOT React/Tailwind—see Project Conventions below)
+7. **Validate against Figma** for 1:1 visual parity before marking complete
+
+## Mandatory Ask Before Creating (CRITICAL)
+
+**BEFORE creating any new block, CSS class, design token, or SVG icon**, you MUST stop and ask the user how to proceed. This is non-negotiable.
+
+### What Triggers a Mandatory Ask
+
+You MUST ask when you're about to:
+
+| New Thing | Example | What to Ask |
+| --------- | ------- | ----------- |
+| **New block** | Figma has a "TestimonialCarousel" component | "I see a TestimonialCarousel in Figma. Should I: (a) reuse/compose existing blocks like `carousel` + `sectionHeader`, (b) extend an existing block with new variants, or (c) create a brand new `testimonial-carousel.block.ts`?" |
+| **New CSS class** | Figma has a card-like element with slightly different styling | "This card-like element differs from `.card` in X, Y ways. Should I: (a) use `.card` as-is with minor overrides, (b) add a modifier like `.card--testimonial`, or (c) create a new `.testimonial-card` component class?" |
+| **New design token** | Figma uses a color that doesn't map to existing tokens | "Figma uses `#3B82F6` which doesn't match existing tokens. Should I: (a) use closest existing token `--color-accent`, (b) add a new semantic token `--color-link`, or (c) something else?" |
+| **New SVG icon** | Figma has an icon not in the sprite | "This icon 'star-filled' isn't in the sprite. Should I: (a) add it to `public/svg/` and sprite, (b) use an existing similar icon, or (c) skip it for now?" |
+| **New prop pattern** | Schema needs a field type not commonly used | "This block needs a `rating` field (1-5 stars). Should I: (a) use `z.number().min(1).max(5)`, (b) use `z.enum(['1','2','3','4','5'])`, or (c) handle this differently?" |
+
+### How to Ask
+
+When asking, provide:
+
+1. **What you found** — the Figma element/pattern in question
+2. **What exists** — similar existing blocks/classes/tokens you found
+3. **Your recommendation** — what you think makes sense and why
+4. **Clear options** — concrete choices the user can pick from
+
+### Example Ask Format
+
+```
+🛑 **New Element Detected: [name]**
+
+**Figma shows:** [brief description of what you see]
+
+**Similar existing patterns:**
+- `existingBlock` — handles X, differs in Y
+- `.existing-class` — provides Z styling
+
+**My recommendation:** [option] because [reasoning]
+
+**Options:**
+(a) Reuse `existingBlock` and compose at page level
+(b) Extend `existingBlock` with new variant prop
+(c) Create new `newBlock` — truly unique pattern
+
+Which approach should I take?
+```
+
+### DO NOT Ask For
+
+- Using an existing block/class exactly as intended (just use it)
+- Minor template adjustments within established patterns
+- Standard prop types that follow existing conventions
+- Assets that clearly need downloading (images, required icons)
+
+### Why This Matters
+
+This checkpoint prevents:
+- Duplicate patterns that should be composed
+- CSS bloat from recreating existing components
+- Inconsistent design tokens
+- Blocks that should be page-level composition
 
 ## Asset Handling (CRITICAL)
 
@@ -244,6 +306,7 @@ Use CSS `+ .section--tone-X` selectors to handle spacing between consecutive sam
 Before completing a Figma → Code implementation:
 
 - [ ] Used `get_design_context` AND `get_screenshot` before coding
+- [ ] **ASKED USER before creating any new block, CSS class, token, or icon**
 - [ ] **GREPPED `styles.css` for existing patterns before creating new classes**
 - [ ] **Checked existing `.block.html` files for similar sub-patterns**
 - [ ] Created `.block.ts` with Zod schema matching Figma layers

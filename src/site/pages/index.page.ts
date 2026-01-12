@@ -221,6 +221,61 @@ export const indexPage: PageConfig = {
           },
         },
         {
+          id: "collections-header",
+          type: "sectionHeader",
+          props: {
+            headline: "Vybíráme z našich kolekcí",
+            body: "",
+            cta: {
+              href: "/kolekce",
+              label: "Kompletní kolekce",
+            },
+          },
+          layout: {
+            tone: "inverted",
+            contentAlign: "left",
+          },
+        },
+        {
+          id: "collections-bento",
+          type: "bentoShowcase",
+          props: {
+            featured: {
+              title: "Zárubně",
+              description: "Elegantní posuv\nPremium šatny i koupelny",
+              image: {
+                src: "public/images/teaser3.jpg",
+                alt: "Zárubně",
+              },
+              href: "/kolekce/zarubne",
+            },
+            items: [
+              {
+                title: "Aktive 40/00",
+                description:
+                  "je určena k otevírání bezpolodrážkových dveří směrem k sobě z pohledové strany.",
+                image: {
+                  src: "public/images/teaser9.jpg",
+                  alt: "Aktive 40/00",
+                },
+                href: "/kolekce/aktive",
+              },
+              {
+                title: "Dveře Master",
+                description: "Nadčasově minimalistické dveře Master",
+                image: {
+                  src: "public/images/teaser4.jpg",
+                  alt: "Dveře Master",
+                },
+                href: "/kolekce/dvere-master",
+              },
+            ],
+          },
+          layout: {
+            tone: "inverted",
+          },
+        },
+        {
           id: "reference-header",
           type: "sectionHeader",
           props: {
