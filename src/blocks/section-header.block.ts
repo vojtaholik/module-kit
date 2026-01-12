@@ -13,6 +13,12 @@ export const sectionHeaderPropsSchema = z.object({
       height: z.number().optional(),
     })
     .optional(),
+  cta: z
+    .object({
+      href: z.string(),
+      label: z.string(),
+    })
+    .optional(),
 });
 
 export type SectionHeaderProps = z.infer<typeof sectionHeaderPropsSchema>;

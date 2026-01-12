@@ -8,6 +8,13 @@ alwaysApply: false
 
 When using Figma MCP (`get_variable_defs`, `get_design_context`) to extract design tokens, follow these conventions to maintain a consistent, modern CSS custom property system.
 
+## Required Workflow
+
+1. Use `get_variable_defs` to fetch all Figma variables for the file/selection
+2. Check existing tokens in `src/public/css/styles.css` before adding duplicates
+3. Map Figma values to semantic token names (NOT Figma's internal naming)
+4. All tokens live in `:root`—no component-scoped token definitions
+
 ## Token Naming Convention
 
 Map Figma variable collections to CSS custom property namespaces:

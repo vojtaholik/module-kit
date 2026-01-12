@@ -48,11 +48,15 @@ export const indexPage: PageConfig = {
           },
           layout: {
             contentAlign: "left",
+            tone: "raised",
           },
         },
         {
           id: "grid-1",
           type: "grid",
+          layout: {
+            tone: "raised",
+          },
           props: {
             itemBlock: "teaser",
             columns: "5",
@@ -214,6 +218,78 @@ export const indexPage: PageConfig = {
                 },
               },
             ],
+          },
+        },
+        {
+          id: "reference-header",
+          type: "sectionHeader",
+          props: {
+            headline: "Reference",
+            body: "Naše práce mluví za nás. Naše řešení najdete v domku mladé rodiny, ale i v realizacích zvučných architektů, nebo třeba u dubajských šejků.",
+            cta: {
+              href: "/reference",
+              label: "Zobrazit všechny",
+            },
+          },
+          layout: {
+            tone: "surface",
+            contentAlign: "left",
+          },
+        },
+        {
+          id: "reference-carousel",
+          type: "reference",
+          props: {
+            items: [
+              {
+                title: "Jídelna Koma Modular",
+                category: "Obklady & grafosklo",
+                image: {
+                  src: "public/images/ref-koma-modular.jpg",
+                  alt: "Jídelna Koma Modular",
+                },
+                href: "/reference/jidelna-koma-modular",
+              },
+              {
+                title: "Schodiště v rodinném domě",
+                category: "Schodiště",
+                image: {
+                  src: "public/images/ref-schodiste-rodinny-dum.jpg",
+                  alt: "Schodiště v rodinném domě",
+                },
+                href: "/reference/schodiste-rodinny-dum",
+              },
+              {
+                title: "Projekt Chlum",
+                category: "Prémiové dveře",
+                image: {
+                  src: "public/images/ref-projekt-chlum.jpg",
+                  alt: "Projekt Chlum",
+                },
+                href: "/reference/projekt-chlum",
+              },
+              {
+                title: "Pístovický mlýn",
+                category: "Prémiové dveře",
+                image: {
+                  src: "public/images/ref-pistovicky-mlyn.jpg",
+                  alt: "Pístovický mlýn",
+                },
+                href: "/reference/pistovicky-mlyn",
+              },
+              {
+                title: "Schodiště Laser",
+                category: "Schodiště",
+                image: {
+                  src: "public/images/ref-schodiste-laser.jpg",
+                  alt: "Schodiště Laser",
+                },
+                href: "/reference/schodiste-laser",
+              },
+            ],
+          },
+          layout: {
+            tone: "surface",
           },
         },
         {

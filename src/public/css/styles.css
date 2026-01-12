@@ -340,12 +340,12 @@ main {
 
 /* Section tones */
 .section--tone-surface {
-  background: var(--color-bg);
+  background: var(--color-bg-raised);
   color: var(--color-text);
 }
 
 .section--tone-raised {
-  background: var(--color-bg-raised);
+  background: var(--color-bg);
   color: var(--color-text);
 }
 
@@ -652,6 +652,25 @@ main {
 
 .section-header--center .prose {
   text-align: left;
+}
+
+/* Section header with CTA button */
+.section-header--left:has(.btn) {
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.section-header--left:has(.btn) .section-header__content {
+  max-width: 754px;
+}
+
+/* Consecutive same-tone sections - reduce gap */
+.section--tone-raised + .section--tone-raised {
+  padding-top: 0;
+}
+
+.section--tone-surface + .section--tone-surface {
+  padding-top: 0;
 }
 
 /* --------------------------------------------------------------------------
@@ -1124,4 +1143,186 @@ main {
   border-top: 1px solid var(--color-border);
   color: var(--color-text-muted);
   font-size: var(--text-sm);
+}
+
+/* --------------------------------------------------------------------------
+   Reference Section
+   -------------------------------------------------------------------------- */
+
+.section--reference {
+  padding: var(--space-20) 0 var(--space-24);
+  background: var(--color-bg-raised);
+}
+
+.btn--outline-dark {
+  background: transparent;
+  color: var(--color-text);
+  border: 1px solid var(--color-text);
+}
+
+.btn--outline-dark:hover {
+  background: var(--color-text);
+  color: var(--color-bg);
+}
+
+/* --------------------------------------------------------------------------
+   Carousel (Shared Component)
+   -------------------------------------------------------------------------- */
+
+.carousel {
+  display: flex;
+  gap: var(--space-4);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  scrollbar-width: none; /* Firefox */
+  -webkit-overflow-scrolling: touch;
+  margin: 0 calc(-1 * var(--space-6));
+  padding: 0 var(--space-6);
+}
+
+.carousel::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+.carousel > * {
+  scroll-snap-align: start;
+  scroll-snap-stop: normal;
+}
+
+/* Fallback controls (hidden when native ::scroll-button supported) */
+.carousel__controls {
+  display: flex;
+  gap: var(--space-3);
+  margin-bottom: var(--space-12);
+}
+
+.carousel__arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-gold);
+  background: var(--color-bg-raised);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background var(--transition-fast),
+    border-color var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+}
+
+.carousel__arrow:hover {
+  background: var(--color-gold);
+  border-color: var(--color-gold);
+  color: var(--color-bg);
+}
+
+.carousel__arrow svg {
+  width: 16px;
+  height: 16px;
+}
+
+.carousel__arrow:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* 
+ * Chrome 135+ has native ::scroll-button() but positioning them 
+ * outside the scroll container requires CSS anchor positioning
+ * which is still experimental. Using JS fallback for now.
+ * TODO: Revisit when anchor positioning is stable.
+ */
+
+/* --------------------------------------------------------------------------
+   Reference Carousel Variant
+   -------------------------------------------------------------------------- */
+
+.reference__card {
+  flex: 0 0 auto;
+  width: 382px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  text-decoration: none;
+  color: inherit;
+}
+
+.reference__card:hover .reference__card-image img {
+  transform: scale(1.03);
+}
+
+.reference__card-image {
+  overflow: hidden;
+  background: var(--color-bg);
+}
+
+/* Masonry effect - varying heights */
+.reference__card:nth-child(5n + 1) .reference__card-image {
+  height: 261px;
+}
+
+.reference__card:nth-child(5n + 2) .reference__card-image {
+  height: 490px;
+}
+
+.reference__card:nth-child(5n + 3) .reference__card-image {
+  height: 400px;
+}
+
+.reference__card:nth-child(5n + 4) .reference__card-image {
+  height: 261px;
+}
+
+.reference__card:nth-child(5n + 5) .reference__card-image {
+  height: 400px;
+}
+
+.reference__card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--transition-slow);
+}
+
+.reference__card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.reference__card-title {
+  font-family: var(--font-heading);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--color-text);
+}
+
+.reference__card-category {
+  font-size: var(--text-base);
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+@media (max-width: 900px) {
+  .reference__card {
+    width: 300px;
+  }
+
+  .reference__card:nth-child(5n + 1) .reference__card-image,
+  .reference__card:nth-child(5n + 2) .reference__card-image,
+  .reference__card:nth-child(5n + 3) .reference__card-image,
+  .reference__card:nth-child(5n + 4) .reference__card-image,
+  .reference__card:nth-child(5n + 5) .reference__card-image {
+    height: 320px;
+  }
+}
+
+@media (max-width: 640px) {
+  .reference__card {
+    width: 280px;
+  }
 }

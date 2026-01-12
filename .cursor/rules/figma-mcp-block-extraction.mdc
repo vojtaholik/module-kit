@@ -8,6 +8,13 @@ alwaysApply: false
 
 When using Figma MCP to define or extract blocks for static-kit, follow these conventions.
 
+## Required Workflow
+
+1. **Always run `get_design_context`** first to get the structured node representation
+2. **Always run `get_screenshot`** to have a visual reference during implementation
+3. **Only then** start generating the block schema and template
+4. Translate Figma's output into static-kit conventions (see below)—DO NOT use React/Tailwind directly
+
 ## Figma Component Naming → Block Type
 
 | Figma Component Name | Block File              | Block Type      |
