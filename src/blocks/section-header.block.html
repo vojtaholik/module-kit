@@ -7,7 +7,7 @@
     <div class="section-header section-header--{{ ctx.layout.contentAlign }}">
       <div class="section-header__content">
         <template v-if="props.headline">
-          <h2 class="h2">{{ props.headline }}</h2>
+          <h2>{{ props.headline }}</h2>
         </template>
         <div class="prose" v-if="props.body">{{{ props.body }}}</div>
       </div>
@@ -21,6 +21,11 @@
             loading="lazy"
           />
         </div>
+      </template>
+      <template v-if="props.cta">
+        <a :href="props.cta.href" class="btn btn--outline-dark btn--sm">
+          {{ props.cta.label }}
+        </a>
       </template>
     </div>
   </div>

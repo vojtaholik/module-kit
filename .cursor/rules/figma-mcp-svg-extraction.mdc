@@ -8,6 +8,13 @@ alwaysApply: false
 
 When extracting SVGs from Figma using MCP (`get_design_context`, `get_screenshot`), follow this workflow to maintain a clean sprite-based icon system.
 
+## CRITICAL: Asset Endpoint Handling
+
+- The Figma MCP Server provides an assets endpoint which serves SVG assets
+- **IMPORTANT**: If Figma MCP returns a localhost source for an SVG, download that SVG directly
+- **IMPORTANT**: DO NOT import/add new icon packages—all icons come from the Figma payload
+- **IMPORTANT**: DO NOT use placeholder icons if a localhost source is provided
+
 ## File Structure
 
 ```

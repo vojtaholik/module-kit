@@ -26,6 +26,11 @@ export {
   businessCardPropsSchema,
   type BusinessCardProps,
 } from "./business-card.block.ts";
+export {
+  referenceBlock,
+  referencePropsSchema,
+  type ReferenceProps,
+} from "./reference.block.ts";
 
 // Register all blocks
 import { blockRegistry } from "@static-block-kit/core";
@@ -36,6 +41,7 @@ import { sectionHeaderBlock } from "./section-header.block.ts";
 import { gridBlock } from "./grid.block.ts";
 import { teaserBlock } from "./teaser.block.ts";
 import { businessCardBlock } from "./business-card.block.ts";
+import { referenceBlock } from "./reference.block.ts";
 
 export function registerAllBlocks() {
   blockRegistry.register(heroBlock);
@@ -45,4 +51,5 @@ export function registerAllBlocks() {
   blockRegistry.register(gridBlock);
   blockRegistry.register(teaserBlock);
   blockRegistry.register(businessCardBlock);
+  blockRegistry.register(referenceBlock);
 }
