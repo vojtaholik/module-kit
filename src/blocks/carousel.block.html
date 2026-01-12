@@ -1,5 +1,5 @@
 <section
-  class="section section--reference section--tone-{{ ctx.layout.tone }}"
+  class="section section--carousel section--tone-{{ ctx.layout.tone }}"
   data-block-id="{{ addr.blockId }}"
   data-schema-address="{{ encodeSchemaAddress(addr) }}"
 >
@@ -27,15 +27,17 @@
       </button>
     </div>
 
-    <div class="carousel carousel--reference" data-carousel>
+    <div :class="'carousel carousel--' + props.variant" data-carousel>
       <template v-for="item in props.items">
-        <a :href="item.href || '#'" class="reference__card">
-          <div class="reference__card-image">
+        <a :href="item.href || '#'" :class="'carousel__card carousel__card--' + props.variant">
+          <div class="carousel__card-image">
             <img :src="item.image.src" :alt="item.image.alt" loading="lazy" />
           </div>
-          <div class="reference__card-body">
-            <h3 class="reference__card-title">{{ item.title }}</h3>
-            <p class="reference__card-category">{{ item.category }}</p>
+          <div class="carousel__card-body">
+            <h3 class="carousel__card-title">{{ item.title }}</h3>
+            <template v-if="item.subtitle">
+              <p class="carousel__card-subtitle">{{ item.subtitle }}</p>
+            </template>
           </div>
         </a>
       </template>

@@ -1146,12 +1146,11 @@ main {
 }
 
 /* --------------------------------------------------------------------------
-   Reference Section
+   Carousel Block
    -------------------------------------------------------------------------- */
 
-.section--reference {
+.section--carousel {
   padding: var(--space-20) 0 var(--space-24);
-  background: var(--color-bg-raised);
 }
 
 .btn--outline-dark {
@@ -1164,10 +1163,6 @@ main {
   background: var(--color-text);
   color: var(--color-bg);
 }
-
-/* --------------------------------------------------------------------------
-   Carousel (Shared Component)
-   -------------------------------------------------------------------------- */
 
 .carousel {
   display: flex;
@@ -1237,12 +1232,11 @@ main {
  */
 
 /* --------------------------------------------------------------------------
-   Reference Carousel Variant
+   Carousel Card (Base)
    -------------------------------------------------------------------------- */
 
-.reference__card {
+.carousel__card {
   flex: 0 0 auto;
-  width: 382px;
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
@@ -1250,50 +1244,29 @@ main {
   color: inherit;
 }
 
-.reference__card:hover .reference__card-image img {
+.carousel__card:hover .carousel__card-image img {
   transform: scale(1.03);
 }
 
-.reference__card-image {
+.carousel__card-image {
   overflow: hidden;
   background: var(--color-bg);
 }
 
-/* Masonry effect - varying heights */
-.reference__card:nth-child(5n + 1) .reference__card-image {
-  height: 261px;
-}
-
-.reference__card:nth-child(5n + 2) .reference__card-image {
-  height: 490px;
-}
-
-.reference__card:nth-child(5n + 3) .reference__card-image {
-  height: 400px;
-}
-
-.reference__card:nth-child(5n + 4) .reference__card-image {
-  height: 261px;
-}
-
-.reference__card:nth-child(5n + 5) .reference__card-image {
-  height: 400px;
-}
-
-.reference__card-image img {
+.carousel__card-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   transition: transform var(--transition-slow);
 }
 
-.reference__card-body {
+.carousel__card-body {
   display: flex;
   flex-direction: column;
   gap: 0;
 }
 
-.reference__card-title {
+.carousel__card-title {
   font-family: var(--font-heading);
   font-size: var(--text-xl);
   font-weight: 700;
@@ -1301,28 +1274,57 @@ main {
   color: var(--color-text);
 }
 
-.reference__card-category {
+.carousel__card-subtitle {
   font-size: var(--text-base);
   color: var(--color-text-muted);
   line-height: 1.4;
 }
 
+/* --------------------------------------------------------------------------
+   Carousel Card - Reference Variant (masonry heights)
+   -------------------------------------------------------------------------- */
+
+.carousel__card--reference {
+  width: 382px;
+}
+
+/* Masonry effect - varying heights */
+.carousel__card--reference:nth-child(5n + 1) .carousel__card-image {
+  height: 261px;
+}
+
+.carousel__card--reference:nth-child(5n + 2) .carousel__card-image {
+  height: 490px;
+}
+
+.carousel__card--reference:nth-child(5n + 3) .carousel__card-image {
+  height: 400px;
+}
+
+.carousel__card--reference:nth-child(5n + 4) .carousel__card-image {
+  height: 261px;
+}
+
+.carousel__card--reference:nth-child(5n + 5) .carousel__card-image {
+  height: 400px;
+}
+
 @media (max-width: 900px) {
-  .reference__card {
+  .carousel__card--reference {
     width: 300px;
   }
 
-  .reference__card:nth-child(5n + 1) .reference__card-image,
-  .reference__card:nth-child(5n + 2) .reference__card-image,
-  .reference__card:nth-child(5n + 3) .reference__card-image,
-  .reference__card:nth-child(5n + 4) .reference__card-image,
-  .reference__card:nth-child(5n + 5) .reference__card-image {
+  .carousel__card--reference:nth-child(5n + 1) .carousel__card-image,
+  .carousel__card--reference:nth-child(5n + 2) .carousel__card-image,
+  .carousel__card--reference:nth-child(5n + 3) .carousel__card-image,
+  .carousel__card--reference:nth-child(5n + 4) .carousel__card-image,
+  .carousel__card--reference:nth-child(5n + 5) .carousel__card-image {
     height: 320px;
   }
 }
 
 @media (max-width: 640px) {
-  .reference__card {
+  .carousel__card--reference {
     width: 280px;
   }
 }

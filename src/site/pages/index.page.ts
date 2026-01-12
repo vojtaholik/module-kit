@@ -238,12 +238,13 @@ export const indexPage: PageConfig = {
         },
         {
           id: "reference-carousel",
-          type: "reference",
+          type: "carousel",
           props: {
+            variant: "reference",
             items: [
               {
                 title: "Jídelna Koma Modular",
-                category: "Obklady & grafosklo",
+                subtitle: "Obklady & grafosklo",
                 image: {
                   src: "public/images/ref-koma-modular.jpg",
                   alt: "Jídelna Koma Modular",
@@ -252,7 +253,7 @@ export const indexPage: PageConfig = {
               },
               {
                 title: "Schodiště v rodinném domě",
-                category: "Schodiště",
+                subtitle: "Schodiště",
                 image: {
                   src: "public/images/ref-schodiste-rodinny-dum.jpg",
                   alt: "Schodiště v rodinném domě",
@@ -261,7 +262,7 @@ export const indexPage: PageConfig = {
               },
               {
                 title: "Projekt Chlum",
-                category: "Prémiové dveře",
+                subtitle: "Prémiové dveře",
                 image: {
                   src: "public/images/ref-projekt-chlum.jpg",
                   alt: "Projekt Chlum",
@@ -270,7 +271,7 @@ export const indexPage: PageConfig = {
               },
               {
                 title: "Pístovický mlýn",
-                category: "Prémiové dveře",
+                subtitle: "Prémiové dveře",
                 image: {
                   src: "public/images/ref-pistovicky-mlyn.jpg",
                   alt: "Pístovický mlýn",
@@ -279,7 +280,7 @@ export const indexPage: PageConfig = {
               },
               {
                 title: "Schodiště Laser",
-                category: "Schodiště",
+                subtitle: "Schodiště",
                 image: {
                   src: "public/images/ref-schodiste-laser.jpg",
                   alt: "Schodiště Laser",
