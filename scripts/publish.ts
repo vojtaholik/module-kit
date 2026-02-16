@@ -1,25 +1,21 @@
 #!/usr/bin/env bun
 /**
- * Publish all @vojtaholik/static-kit-* packages to npm.
+ * Release @vojtaholik/static-kit-* packages.
+ *
+ * Bumps versions, commits, tags, and pushes.
+ * GitHub Actions handles the actual npm publish.
  *
  * Usage:
- *   bun run scripts/publish.ts [patch|minor|major] [--otp 123456] [--no-bump]
- *
- * Steps:
- *   1. Typecheck + test
- *   2. Bump version in all packages
- *   3. Publish core → cli → create-static-kit
- *   4. Git commit + tag
+ *   bun run release              # patch bump (2.0.0 → 2.0.1)
+ *   bun run release minor        # minor bump (2.0.0 → 2.1.0)
+ *   bun run release major        # major bump (2.0.0 → 3.0.0)
+ *   bun run release --no-bump    # release current version as-is
  */
 
 import { join } from "node:path";
 
 const root = join(import.meta.dirname!, "..");
-
-// Parse args: [patch|minor|major] [--otp 123456]
 const args = process.argv.slice(2);
-const otpIndex = args.indexOf("--otp");
-const otp = otpIndex !== -1 ? args[otpIndex + 1] : undefined;
 const noBump = args.includes("--no-bump");
 const bump = (args.find(a => ["patch", "minor", "major"].includes(a)) || "patch") as "patch" | "minor" | "major";
 
@@ -29,7 +25,7 @@ const packages = [
   "packages/create-static-kit",
 ];
 
-// Read current version from core
+// Read current version
 const corePkg = await Bun.file(join(root, "packages/core/package.json")).json();
 const currentVersion: string = corePkg.version;
 const [major, minor, patch] = currentVersion.split(".").map(Number);
@@ -52,85 +48,53 @@ if (noBump) {
   }
 }
 
-console.log(`\n📦 Publishing @vojtaholik/static-kit packages`);
-console.log(`   ${noBump ? `${currentVersion} (no bump)` : `${currentVersion} → ${newVersion} (${bump})`}\n`);
+console.log(`\n📦 Release @vojtaholik/static-kit v${newVersion}`);
+console.log(`   ${noBump ? "(no bump)" : `${currentVersion} → ${newVersion} (${bump})`}\n`);
 
-// Step 1: Typecheck + test
+// Typecheck + test
 console.log("🔍 Running typecheck...");
-const tc = Bun.spawnSync(["bun", "run", "typecheck"], { cwd: root, stdio: ["inherit", "inherit", "inherit"] });
-if (tc.exitCode !== 0) {
-  console.error("❌ Typecheck failed");
-  process.exit(1);
-}
+let result = Bun.spawnSync(["bun", "run", "typecheck"], { cwd: root, stdio: ["inherit", "inherit", "inherit"] });
+if (result.exitCode !== 0) { console.error("❌ Typecheck failed"); process.exit(1); }
 
 console.log("\n🧪 Running tests...");
-const test = Bun.spawnSync(["bun", "test"], { cwd: root, stdio: ["inherit", "inherit", "inherit"] });
-if (test.exitCode !== 0) {
-  console.error("❌ Tests failed");
-  process.exit(1);
-}
+result = Bun.spawnSync(["bun", "test"], { cwd: root, stdio: ["inherit", "inherit", "inherit"] });
+if (result.exitCode !== 0) { console.error("❌ Tests failed"); process.exit(1); }
 
-// Step 2: Bump version in all packages
-console.log(`\n📝 Bumping versions to ${newVersion}...`);
-for (const pkgDir of packages) {
-  const pkgPath = join(root, pkgDir, "package.json");
-  const pkg = await Bun.file(pkgPath).json();
-  pkg.version = newVersion;
+// Bump versions
+if (!noBump) {
+  console.log(`\n📝 Bumping to ${newVersion}...`);
+  for (const pkgDir of packages) {
+    const pkgPath = join(root, pkgDir, "package.json");
+    const pkg = await Bun.file(pkgPath).json();
+    pkg.version = newVersion;
+    await Bun.write(pkgPath, JSON.stringify(pkg, null, 2) + "\n");
+    console.log(`   ✓ ${pkg.name}@${newVersion}`);
+  }
 
-  // Update workspace dep versions to exact new version for publishing
-  for (const depType of ["dependencies", "devDependencies", "peerDependencies"] as const) {
-    const deps = pkg[depType];
+  // Update template deps
+  const templatePkgPath = join(root, "packages/create-static-kit/template/package.json");
+  const templatePkg = await Bun.file(templatePkgPath).json();
+  for (const depType of ["dependencies", "devDependencies"] as const) {
+    const deps = templatePkg[depType];
     if (!deps) continue;
-    for (const [name, version] of Object.entries(deps)) {
-      if (typeof version === "string" && version === "workspace:*" && name.startsWith("@vojtaholik/")) {
+    for (const name of Object.keys(deps)) {
+      if (name.startsWith("@vojtaholik/")) {
         deps[name] = `^${newVersion}`;
       }
     }
   }
-
-  await Bun.write(pkgPath, JSON.stringify(pkg, null, 2) + "\n");
-  console.log(`   ✓ ${pkg.name}@${newVersion}`);
+  await Bun.write(templatePkgPath, JSON.stringify(templatePkg, null, 2) + "\n");
 }
 
-// Also update template/package.json dep versions
-const templatePkgPath = join(root, "packages/create-static-kit/template/package.json");
-const templatePkg = await Bun.file(templatePkgPath).json();
-for (const depType of ["dependencies", "devDependencies"] as const) {
-  const deps = templatePkg[depType];
-  if (!deps) continue;
-  for (const name of Object.keys(deps)) {
-    if (name.startsWith("@vojtaholik/")) {
-      deps[name] = `^${newVersion}`;
-    }
-  }
-}
-await Bun.write(templatePkgPath, JSON.stringify(templatePkg, null, 2) + "\n");
-
-// Step 3: Publish in order (core first since cli depends on it)
-console.log("\n🚀 Publishing to npm...");
-for (const pkgDir of packages) {
-  const pkgPath = join(root, pkgDir);
-  console.log(`   Publishing ${pkgDir}...`);
-  const publishArgs = ["npm", "publish", "--access", "public"];
-  if (otp) publishArgs.push("--otp", otp);
-  const pub = Bun.spawnSync(publishArgs, {
-    cwd: pkgPath,
-    stdio: ["inherit", "inherit", "inherit"],
-  });
-  if (pub.exitCode !== 0) {
-    console.error(`❌ Failed to publish ${pkgDir}`);
-    process.exit(1);
-  }
-}
-
-// Step 4: Git commit + tag
-console.log("\n📌 Committing and tagging...");
+// Commit, tag, push
+console.log("\n🚀 Committing, tagging, and pushing...");
 Bun.spawnSync(["git", "add", "-A"], { cwd: root });
 Bun.spawnSync(["git", "commit", "-m", `release: v${newVersion}`], {
   cwd: root,
   stdio: ["inherit", "inherit", "inherit"],
 });
 Bun.spawnSync(["git", "tag", `v${newVersion}`], { cwd: root });
+Bun.spawnSync(["git", "push"], { cwd: root, stdio: ["inherit", "inherit", "inherit"] });
+Bun.spawnSync(["git", "push", "--tags"], { cwd: root, stdio: ["inherit", "inherit", "inherit"] });
 
-console.log(`\n✅ Published v${newVersion}!`);
-console.log(`   Run \`git push && git push --tags\` to push.\n`);
+console.log(`\n✅ v${newVersion} pushed! GitHub Actions will publish to npm.\n`);
