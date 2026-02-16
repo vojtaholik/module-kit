@@ -1,4 +1,4 @@
-import { defineConfig } from "@static-block-kit/core";
+import { defineConfig } from "@vojtaholik/static-kit-core";
 
 export default defineConfig({
   blocksDir: "src/blocks",

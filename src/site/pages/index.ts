@@ -1,4 +1,4 @@
-import type { PageConfig } from "@static-block-kit/core";
+import type { PageConfig } from "@vojtaholik/static-kit-core";
 import { indexPage } from "./index.page.ts";
 import { aboutPage } from "./about.page.ts";
 

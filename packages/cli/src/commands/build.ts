@@ -16,7 +16,7 @@ import {
   renderPage,
   compileBlockTemplates,
   type PageConfig,
-} from "@static-block-kit/core";
+} from "@vojtaholik/static-kit-core";
 import { loadConfig, resolvePath } from "../config-loader.ts";
 import { processCSS } from "../css-processor.ts";
 import { compileSpritesheet } from "../sprite-compiler.ts";

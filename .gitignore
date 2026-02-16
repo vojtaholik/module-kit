@@ -19,3 +19,5 @@ bun.lockb
 # Env
 .env
 .env.local
+
+.claude/.worker-tracking

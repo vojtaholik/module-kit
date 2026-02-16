@@ -3,18 +3,18 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "dev": "static-block-kit dev",
-    "build": "static-block-kit build",
-    "gen": "static-block-kit gen",
+    "dev": "static-kit dev",
+    "build": "static-kit build",
+    "gen": "static-kit gen",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@static-block-kit/core": "^0.0.1"
+    "@vojtaholik/static-kit-core": "^0.0.1"
   },
   "devDependencies": {
     "@types/bun": "latest",
     "bun-types": "^1.3.4",
-    "static-block-kit": "^0.0.1",
+    "@vojtaholik/static-kit-cli": "^0.0.1",
     "typescript": "^5"
   }
 }

@@ -40,7 +40,7 @@ export {
 } from "./bento-showcase.block.ts";
 
 // Register all blocks
-import { blockRegistry } from "@static-block-kit/core";
+import { blockRegistry } from "@vojtaholik/static-kit-core";
 import { heroBlock } from "./hero.block.ts";
 import { featureGridBlock } from "./feature-grid.block.ts";
 import { latestPostsBlock } from "./latest-posts.block.ts";

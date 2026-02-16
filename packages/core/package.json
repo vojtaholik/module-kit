@@ -1,6 +1,6 @@
 {
-  "name": "@static-block-kit/core",
-  "version": "0.0.1",
+  "name": "@vojtaholik/static-kit-core",
+  "version": "0.1.0",
   "type": "module",
   "exports": {
     ".": {
@@ -9,6 +9,9 @@
     }
   },
   "files": ["src"],
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "parse5": "^8.0.0",
     "zod": "^4.1.13"

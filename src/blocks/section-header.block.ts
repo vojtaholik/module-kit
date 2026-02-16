@@ -1,5 +1,5 @@
 import { z } from "zod/v4";
-import { defineBlock } from "@static-block-kit/core";
+import { defineBlock } from "@vojtaholik/static-kit-core";
 import { renderSectionHeader } from "./gen/section-header.render.ts";
 
 export const sectionHeaderPropsSchema = z.object({

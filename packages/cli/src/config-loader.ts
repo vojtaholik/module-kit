@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { existsSync } from "node:fs";
-import { configSchema, type StaticKitConfig } from "@static-block-kit/core";
+import { configSchema, type StaticKitConfig } from "@vojtaholik/static-kit-core";
 
 /**
  * Load static-kit.config.ts from the current working directory

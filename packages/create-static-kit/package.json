@@ -1,9 +1,12 @@
 {
-  "name": "create-static-kit",
-  "version": "0.0.1",
+  "name": "@vojtaholik/create-static-kit",
+  "version": "0.1.0",
   "type": "module",
   "bin": {
     "create-static-kit": "./src/index.ts"
   },
-  "files": ["src", "template"]
+  "files": ["src", "template"],
+  "publishConfig": {
+    "access": "public"
+  }
 }

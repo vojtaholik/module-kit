@@ -4,7 +4,7 @@
  */
 
 import { join } from "node:path";
-import { compileBlockTemplates } from "@static-block-kit/core";
+import { compileBlockTemplates } from "@vojtaholik/static-kit-core";
 import { loadConfig } from "../config-loader.ts";
 
 const cwd = process.cwd();

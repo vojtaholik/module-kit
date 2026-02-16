@@ -172,7 +172,7 @@ Always use the sprite pattern:
 
 ```ts
 import { z } from "zod/v4";
-import { defineBlock } from "@static-block-kit/core";
+import { defineBlock } from "@vojtaholik/static-kit-core";
 
 export const {name}PropsSchema = z.object({
   // Required string

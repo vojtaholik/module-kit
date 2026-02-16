@@ -42,7 +42,7 @@ export interface CompileOptions {
   blocksDir: string;
   /** Output directory for generated render functions (defaults to blocksDir/gen) */
   genDir?: string;
-  /** Custom import path for core utilities (defaults to @static-block-kit/core) */
+  /** Custom import path for core utilities (defaults to @vojtaholik/static-kit-core) */
   coreImportPath?: string;
 }
 
@@ -52,7 +52,7 @@ export interface CompileOptions {
 export async function compileBlockTemplates(
   options: CompileOptions
 ): Promise<void> {
-  const { blocksDir, coreImportPath = "@static-block-kit/core" } = options;
+  const { blocksDir, coreImportPath = "@vojtaholik/static-kit-core" } = options;
   const genDir = options.genDir ?? join(blocksDir, "gen");
 
   // Ensure gen directory exists
@@ -100,7 +100,7 @@ export async function compileBlockTemplates(
  */
 export async function compileTemplateFile(
   filePath: string,
-  coreImportPath = "@static-block-kit/core"
+  coreImportPath = "@vojtaholik/static-kit-core"
 ): Promise<string> {
   const content = await Bun.file(filePath).text();
   return compileTemplate(
@@ -116,7 +116,7 @@ export async function compileTemplateFile(
 export function compileTemplate(
   content: string,
   blockName: string,
-  coreImportPath = "@static-block-kit/core"
+  coreImportPath = "@vojtaholik/static-kit-core"
 ): string {
   const document = parse5.parseFragment(content) as Element;
   const pascalName = toPascalCase(blockName);

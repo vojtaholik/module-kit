@@ -1,4 +1,4 @@
-import type { PageConfig } from "@static-block-kit/core";
+import type { PageConfig } from "@vojtaholik/static-kit-core";
 
 export const indexPage: PageConfig = {
   id: "index",

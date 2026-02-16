@@ -1,4 +1,4 @@
-import type { CmsBlockSchemaMap } from "@static-block-kit/core";
+import type { CmsBlockSchemaMap } from "@vojtaholik/static-kit-core";
 
 /**
  * CMS Block Schema Definitions

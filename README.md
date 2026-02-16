@@ -222,7 +222,7 @@ The fallback children are rendered when:
 
 ```typescript
 import { z } from "zod/v4";
-import { defineBlock } from "@static-block-kit/core";
+import { defineBlock } from "@vojtaholik/static-kit-core";
 import { renderMyBlock } from "./gen/my-block.render.ts";
 
 export const myBlockPropsSchema = z.object({
@@ -249,7 +249,7 @@ export const myBlockBlock = defineBlock({
 ### 3. Register the block (`src/blocks/index.ts`)
 
 ```typescript
-import { blockRegistry } from "@static-block-kit/core";
+import { blockRegistry } from "@vojtaholik/static-kit-core";
 import { myBlockBlock } from "./my-block.block.ts";
 
 export function registerAllBlocks() {

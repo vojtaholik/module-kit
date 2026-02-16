@@ -1,5 +1,5 @@
 import { z } from "zod/v4";
-import { defineBlock } from "@static-block-kit/core";
+import { defineBlock } from "@vojtaholik/static-kit-core";
 import { renderBentoShowcase } from "./gen/bento-showcase.render.ts";
 
 const bentoItemSchema = z.object({
