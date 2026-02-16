@@ -68,7 +68,10 @@ const getPageByPath = pagesModule.getPageByPath as (
 // Try to load cms-blocks if it exists
 let cmsBlocks: Record<string, unknown> = {};
 try {
-  const cmsBlocksModule = await import(join(cwd, "src/cms-blocks.ts"));
+  const cmsPath = config.cmsBlocksFile
+    ? join(cwd, config.cmsBlocksFile)
+    : join(cwd, "cms-blocks.ts");
+  const cmsBlocksModule = await import(`file://${cmsPath}`);
   cmsBlocks = cmsBlocksModule.cmsBlocks ?? cmsBlocksModule.default ?? {};
 } catch {
   // No cms-blocks file, that's fine
