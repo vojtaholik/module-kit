@@ -3,8 +3,7 @@
  * Create Static Kit - Project Scaffolder
  *
  * Usage:
- *   bunx create-static-kit my-site
- *   bunx create-static-kit .
+ *   bun create @vojtaholik/static-kit my-site
  */
 
 import { cp, mkdir } from "node:fs/promises";
@@ -20,13 +19,9 @@ const targetPath = join(process.cwd(), targetDir);
 
 console.log(`\n🚀 Creating Static Kit project in ${targetPath}\n`);
 
-// Create target directory if needed
 await mkdir(targetPath, { recursive: true });
-
-// Copy template
 await cp(templateDir, targetPath, { recursive: true });
 
-// Update package.json with target directory name
 if (targetDir !== ".") {
   const packageJsonPath = join(targetPath, "package.json");
   const packageJson = await Bun.file(packageJsonPath).json();
@@ -39,6 +34,7 @@ console.log(`✅ Done!
 Next steps:
   ${targetDir !== "." ? `cd ${targetDir}` : ""}
   bun install
+  bun run gen
   bun run dev
 
 Happy building! 🎉
