@@ -9,8 +9,8 @@ import {
   renderSlot,
   type BlockDefinition,
   type RenderContext,
-  type SchemaAddress,
 } from "../src/block-registry.ts";
+import type { SchemaAddress } from "../src/schema-address.ts";
 
 describe("Block Registry", () => {
   describe("defineBlock", () => {
