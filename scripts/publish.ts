@@ -3,7 +3,7 @@
  * Publish all @vojtaholik/static-kit-* packages to npm.
  *
  * Usage:
- *   bun run scripts/publish.ts [patch|minor|major]
+ *   bun run scripts/publish.ts [patch|minor|major] [--otp 123456] [--no-bump]
  *
  * Steps:
  *   1. Typecheck + test
@@ -15,7 +15,13 @@
 import { join } from "node:path";
 
 const root = join(import.meta.dirname!, "..");
-const bump = (process.argv[2] || "patch") as "patch" | "minor" | "major";
+
+// Parse args: [patch|minor|major] [--otp 123456]
+const args = process.argv.slice(2);
+const otpIndex = args.indexOf("--otp");
+const otp = otpIndex !== -1 ? args[otpIndex + 1] : undefined;
+const noBump = args.includes("--no-bump");
+const bump = (args.find(a => ["patch", "minor", "major"].includes(a)) || "patch") as "patch" | "minor" | "major";
 
 const packages = [
   "packages/core",
@@ -29,21 +35,25 @@ const currentVersion: string = corePkg.version;
 const [major, minor, patch] = currentVersion.split(".").map(Number);
 
 let newVersion: string;
-switch (bump) {
-  case "major":
-    newVersion = `${major + 1}.0.0`;
-    break;
-  case "minor":
-    newVersion = `${major}.${minor + 1}.0`;
-    break;
-  case "patch":
-  default:
-    newVersion = `${major}.${minor}.${patch + 1}`;
-    break;
+if (noBump) {
+  newVersion = currentVersion;
+} else {
+  switch (bump) {
+    case "major":
+      newVersion = `${major + 1}.0.0`;
+      break;
+    case "minor":
+      newVersion = `${major}.${minor + 1}.0`;
+      break;
+    case "patch":
+    default:
+      newVersion = `${major}.${minor}.${patch + 1}`;
+      break;
+  }
 }
 
 console.log(`\n📦 Publishing @vojtaholik/static-kit packages`);
-console.log(`   ${currentVersion} → ${newVersion} (${bump})\n`);
+console.log(`   ${noBump ? `${currentVersion} (no bump)` : `${currentVersion} → ${newVersion} (${bump})`}\n`);
 
 // Step 1: Typecheck + test
 console.log("🔍 Running typecheck...");
@@ -101,7 +111,9 @@ console.log("\n🚀 Publishing to npm...");
 for (const pkgDir of packages) {
   const pkgPath = join(root, pkgDir);
   console.log(`   Publishing ${pkgDir}...`);
-  const pub = Bun.spawnSync(["npm", "publish", "--access", "public"], {
+  const publishArgs = ["npm", "publish", "--access", "public"];
+  if (otp) publishArgs.push("--otp", otp);
+  const pub = Bun.spawnSync(publishArgs, {
     cwd: pkgPath,
     stdio: ["inherit", "inherit", "inherit"],
   });

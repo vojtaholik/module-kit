@@ -1,0 +1,60 @@
+name: Publish to npm
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+
+      - run: bun install
+
+      - run: bun run gen
+
+      - run: bun run typecheck
+
+      - run: bun test
+
+      - name: Resolve workspace deps for publishing
+        run: |
+          cd packages/cli
+          node -e "
+            const pkg = require('./package.json');
+            for (const [k,v] of Object.entries(pkg.dependencies || {})) {
+              if (v === 'workspace:*') pkg.dependencies[k] = '^' + require('../core/package.json').version;
+            }
+            require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          "
+
+      - name: Publish @vojtaholik/static-kit-core
+        run: npm publish --access public --provenance
+        working-directory: packages/core
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @vojtaholik/static-kit-cli
+        run: npm publish --access public --provenance
+        working-directory: packages/cli
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @vojtaholik/create-static-kit
+        run: npm publish --access public --provenance
+        working-directory: packages/create-static-kit
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
