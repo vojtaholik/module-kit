@@ -27,6 +27,6 @@
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false
   },
-  "include": ["packages/**/*.ts", "src/**/*.ts", "static-kit.config.ts"],
+  "include": ["packages/**/*.ts", "example/**/*.ts", "static-kit.config.ts"],
   "exclude": ["packages/create-static-kit/template/**"]
 }
