@@ -86,14 +86,21 @@ if (!noBump) {
   await Bun.write(templatePkgPath, JSON.stringify(templatePkg, null, 2) + "\n");
 }
 
-// Commit, tag, push
-console.log("\n🚀 Committing, tagging, and pushing...");
-Bun.spawnSync(["git", "add", "-A"], { cwd: root });
-Bun.spawnSync(["git", "commit", "-m", `release: v${newVersion}`], {
-  cwd: root,
-  stdio: ["inherit", "inherit", "inherit"],
-});
-Bun.spawnSync(["git", "tag", `v${newVersion}`], { cwd: root });
+// Commit (only if there are changes), tag, push
+console.log("\n🚀 Tagging and pushing...");
+if (!noBump) {
+  Bun.spawnSync(["git", "add", "-A"], { cwd: root });
+  Bun.spawnSync(["git", "commit", "-m", `release: v${newVersion}`], {
+    cwd: root,
+    stdio: ["inherit", "inherit", "inherit"],
+  });
+}
+const tag = `v${newVersion}`;
+const tagResult = Bun.spawnSync(["git", "tag", tag], { cwd: root });
+if (tagResult.exitCode !== 0) {
+  console.error(`❌ Tag ${tag} already exists. Delete it first: git tag -d ${tag}`);
+  process.exit(1);
+}
 Bun.spawnSync(["git", "push"], { cwd: root, stdio: ["inherit", "inherit", "inherit"] });
 Bun.spawnSync(["git", "push", "--tags"], { cwd: root, stdio: ["inherit", "inherit", "inherit"] });
 
