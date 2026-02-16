@@ -9,6 +9,11 @@
     }
   },
   "files": ["src"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vojtaholik/module-kit",
+    "directory": "packages/core"
+  },
   "publishConfig": {
     "access": "public"
   },

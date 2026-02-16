@@ -6,6 +6,11 @@
     "create-static-kit": "./src/index.ts"
   },
   "files": ["src", "template"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vojtaholik/module-kit",
+    "directory": "packages/create-static-kit"
+  },
   "publishConfig": {
     "access": "public"
   }
