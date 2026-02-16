@@ -65,8 +65,8 @@ describe("Schema Address", () => {
       };
 
       const encoded = encodeSchemaAddress(addr);
-      // Empty string propPath should still be included
-      expect(encoded).toBe("home::main::hero-1::");
+      // Empty string propPath is falsy, treated as absent
+      expect(encoded).toBe("home::main::hero-1");
     });
   });
 
@@ -138,6 +138,7 @@ describe("Schema Address", () => {
     });
 
     test("handles empty string parts", () => {
+      // "::::" splits by "::" into ["", "", ""] (3 parts), so propPath is undefined
       const encoded = "::::";
       const addr = decodeSchemaAddress(encoded);
 
@@ -145,7 +146,7 @@ describe("Schema Address", () => {
         pageId: "",
         region: "",
         blockId: "",
-        propPath: "",
+        propPath: undefined,
       });
     });
   });

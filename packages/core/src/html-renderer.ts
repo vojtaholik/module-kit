@@ -165,7 +165,10 @@ function renderRegionBlocks(
     // Validate and parse props
     const propsResult = definition.propsSchema.safeParse(block.props);
     if (!propsResult.success) {
-      console.error(`Invalid props for block ${block.id}:`, propsResult.error);
+      const issues = propsResult.error.issues
+        .map((i) => `${i.path.join(".")}: ${i.message}`)
+        .join("; ");
+      console.warn(`Invalid props for block ${block.id}: ${issues}`);
       continue;
     }
 

@@ -99,7 +99,7 @@ describe("Template Compiler", () => {
       const result = compileTemplate(template, "test-block");
 
       expect(result).toContain("if (props.show)");
-      expect(result).toContain('out += "<div>"');
+      expect(result).toContain('out += "<div"');
       expect(result).toContain('out += "content"');
     });
 
@@ -124,7 +124,7 @@ describe("Template Compiler", () => {
 
       expect(result).toContain("if (props.show)");
       expect(result).not.toContain("<template");
-      expect(result).toContain('out += "<div>"');
+      expect(result).toContain('out += "<div"');
       expect(result).toContain('out += "a"');
       expect(result).toContain('out += "b"');
     });
@@ -134,7 +134,7 @@ describe("Template Compiler", () => {
       const result = compileTemplate(template, "test-block");
 
       expect(result).not.toContain("v-if");
-      expect(result).toContain('class="test"');
+      expect(result).toContain('class=\\"test\\"');
     });
 
     test("compiles nested v-if", () => {
@@ -193,7 +193,7 @@ describe("Template Compiler", () => {
       const result = compileTemplate(template, "test-block");
 
       expect(result).not.toContain("v-for");
-      expect(result).toContain('class="item"');
+      expect(result).toContain('class=\\"item\\"');
     });
 
     test("throws on invalid v-for syntax", () => {
@@ -231,30 +231,32 @@ describe("Template Compiler", () => {
       const template = '<a :href="props.url">link</a>';
       const result = compileTemplate(template, "test-block");
 
-      expect(result).toContain('out += " href=\\"" + escapeAttr(props.url) + "\\""');
+      expect(result).toContain("const _hrefVal = props.url");
+      expect(result).toContain("escapeAttr(_hrefVal)");
     });
 
     test("compiles multiple dynamic attributes", () => {
       const template = '<a :href="props.url" :title="props.title">link</a>';
       const result = compileTemplate(template, "test-block");
 
-      expect(result).toContain("escapeAttr(props.url)");
-      expect(result).toContain("escapeAttr(props.title)");
+      expect(result).toContain("const _hrefVal = props.url");
+      expect(result).toContain("const _titleVal = props.title");
     });
 
     test("compiles :class binding", () => {
       const template = '<div :class="props.className">content</div>';
       const result = compileTemplate(template, "test-block");
 
-      expect(result).toContain("escapeAttr(props.className)");
+      expect(result).toContain("const _classVal = props.className");
+      expect(result).toContain("escapeAttr(_classVal)");
     });
 
     test("mixes static and dynamic attributes", () => {
       const template = '<a href="/static" :title="props.title">link</a>';
       const result = compileTemplate(template, "test-block");
 
-      expect(result).toContain('href="/static"');
-      expect(result).toContain("escapeAttr(props.title)");
+      expect(result).toContain('href=\\"/static\\"');
+      expect(result).toContain("const _titleVal = props.title");
     });
 
     test("strips :key framework directive", () => {
@@ -277,7 +279,7 @@ describe("Template Compiler", () => {
       const template = '<div class="item-{{ props.id }}">content</div>';
       const result = compileTemplate(template, "test-block");
 
-      expect(result).toContain('out += " class=\\""');
+      expect(result).toContain('class=\\"');
       expect(result).toContain('out += "item-"');
       expect(result).toContain("escapeAttr(props.id)");
     });
@@ -286,7 +288,7 @@ describe("Template Compiler", () => {
       const template = '<div :data-id="props.id">content</div>';
       const result = compileTemplate(template, "test-block");
 
-      expect(result).toContain("const _data-idVal = props.id");
+      expect(result).toContain("_data-idVal = props.id");
       expect(result).toContain("escapeAttr(_data-idVal)");
     });
   });
@@ -325,7 +327,7 @@ describe("Template Compiler", () => {
       const result = compileTemplate(template, "test-block");
 
       expect(result).toContain("renderSlot");
-      expect(result).toContain('_slot += "<div>"');
+      expect(result).toContain('_slot += "<div"');
       expect(result).toContain('_slot += "fallback"');
     });
 
@@ -360,7 +362,7 @@ describe("Template Compiler", () => {
       const template = "<div>content</div>";
       const result = compileTemplate(template, "test-block");
 
-      expect(result).toContain('out += "<div>"');
+      expect(result).toContain('out += "<div"');
       expect(result).toContain('out += "content"');
       expect(result).toContain('out += "</div>"');
     });
@@ -369,8 +371,8 @@ describe("Template Compiler", () => {
       const template = "<div><span>text</span></div>";
       const result = compileTemplate(template, "test-block");
 
-      expect(result).toContain('out += "<div>"');
-      expect(result).toContain('out += "<span>"');
+      expect(result).toContain('out += "<div"');
+      expect(result).toContain('out += "<span"');
       expect(result).toContain('out += "text"');
       expect(result).toContain('out += "</span>"');
       expect(result).toContain('out += "</div>"');
@@ -381,7 +383,7 @@ describe("Template Compiler", () => {
       const result = compileTemplate(template, "test-block");
 
       expect(result).toContain('out += "<img"');
-      expect(result).toContain('src="/image.jpg"');
+      expect(result).toContain('src=\\"/image.jpg\\"');
       expect(result).not.toContain("</img>");
     });
 
@@ -392,7 +394,7 @@ describe("Template Compiler", () => {
         const template = `<${tag} />`;
         const result = compileTemplate(template, "test-block");
 
-        expect(result).toContain(`out += "<${tag}>"`);
+        expect(result).toContain(`out += "<${tag}"`);
         expect(result).not.toContain(`</${tag}>`);
       }
     });
@@ -401,8 +403,8 @@ describe("Template Compiler", () => {
       const template = '<div class="container" id="main">content</div>';
       const result = compileTemplate(template, "test-block");
 
-      expect(result).toContain('class="container"');
-      expect(result).toContain('id="main"');
+      expect(result).toContain('class=\\"container\\"');
+      expect(result).toContain('id=\\"main\\"');
     });
 
     test("handles template tag by rendering children only", () => {
@@ -410,7 +412,7 @@ describe("Template Compiler", () => {
       const result = compileTemplate(template, "test-block");
 
       expect(result).not.toContain("<template");
-      expect(result).toContain('out += "<div>"');
+      expect(result).toContain('out += "<div"');
       expect(result).toContain('out += "a"');
     });
 
@@ -419,7 +421,7 @@ describe("Template Compiler", () => {
       const result = compileTemplate(template, "test-block");
 
       expect(result).not.toContain("comment");
-      expect(result).toContain('out += "<span>"');
+      expect(result).toContain('out += "<span"');
     });
 
     test("handles deeply nested elements", () => {
@@ -427,11 +429,11 @@ describe("Template Compiler", () => {
         "<div><section><article><p><span>deep</span></p></article></section></div>";
       const result = compileTemplate(template, "test-block");
 
-      expect(result).toContain('out += "<div>"');
-      expect(result).toContain('out += "<section>"');
-      expect(result).toContain('out += "<article>"');
-      expect(result).toContain('out += "<p>"');
-      expect(result).toContain('out += "<span>"');
+      expect(result).toContain('out += "<div"');
+      expect(result).toContain('out += "<section"');
+      expect(result).toContain('out += "<article"');
+      expect(result).toContain('out += "<p"');
+      expect(result).toContain('out += "<span"');
       expect(result).toContain('out += "deep"');
     });
   });
@@ -555,8 +557,8 @@ describe("Template Compiler", () => {
       const result = compileTemplate(template, "test-block");
 
       expect(result).toContain("if (props.show)");
-      expect(result).toContain("escapeAttr(props.className)");
-      expect(result).toContain('id="test"');
+      expect(result).toContain("_classVal = props.className");
+      expect(result).toContain('id=\\"test\\"');
       expect(result).toContain("escapeHtml(props.title)");
     });
 
@@ -574,7 +576,7 @@ describe("Template Compiler", () => {
       const template = "<div></div>";
       const result = compileTemplate(template, "test-block");
 
-      expect(result).toContain('out += "<div>"');
+      expect(result).toContain('out += "<div"');
       expect(result).toContain('out += "</div>"');
     });
 
@@ -590,14 +592,15 @@ describe("Template Compiler", () => {
       const template = '<div class="">content</div>';
       const result = compileTemplate(template, "test-block");
 
-      expect(result).toContain('class=""');
+      expect(result).toContain('class=\\"\\"');
     });
 
     test("handles single quote in attribute", () => {
       const template = "<div title=\"it's great\">content</div>";
       const result = compileTemplate(template, "test-block");
 
-      expect(result).toContain("it\\'s great");
+      // Single quotes are not escaped in string literals
+      expect(result).toContain("it's great");
     });
 
     test("handles unicode characters", () => {

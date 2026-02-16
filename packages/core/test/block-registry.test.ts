@@ -2,6 +2,7 @@ import { describe, test, expect, beforeEach } from "bun:test";
 import { z } from "zod/v4";
 import {
   BlockRegistry,
+  blockRegistry,
   defineBlock,
   escapeHtml,
   escapeAttr,
@@ -372,12 +373,11 @@ describe("Block Registry", () => {
   });
 
   describe("renderSlot", () => {
-    let registry: BlockRegistry;
     let mockContext: RenderContext;
     let mockAddr: SchemaAddress;
 
     beforeEach(() => {
-      registry = new BlockRegistry();
+      blockRegistry.clear();
       mockContext = {
         pageId: "test-page",
         assetBase: "/",
@@ -403,7 +403,7 @@ describe("Block Registry", () => {
         renderHtml: ({ props }) => `<div>${props.title}</div>`,
       });
 
-      registry.register(block);
+      blockRegistry.register(block);
 
       const result = renderSlot(
         "hero",
@@ -447,7 +447,7 @@ describe("Block Registry", () => {
         renderHtml: ({ props }) => `<div>${props.title}</div>`,
       });
 
-      registry.register(block);
+      blockRegistry.register(block);
 
       const result = renderSlot(
         "hero",
@@ -495,7 +495,7 @@ describe("Block Registry", () => {
         renderHtml: ({ props }) => `<div>${props.title}</div>`,
       });
 
-      registry.register(block);
+      blockRegistry.register(block);
 
       const devContext = { ...mockContext, isDev: true };
       const result = renderSlot(
@@ -507,7 +507,7 @@ describe("Block Registry", () => {
       );
 
       expect(result).toContain('data-slot-error');
-      expect(result).toContain('"type":"validation"');
+      expect(result).toContain('&quot;type&quot;:&quot;validation&quot;');
     });
 
     test("passes correct context to block render function", () => {
@@ -522,7 +522,7 @@ describe("Block Registry", () => {
         },
       });
 
-      registry.register(block);
+      blockRegistry.register(block);
 
       renderSlot("test", {}, mockContext, mockAddr, () => "fallback");
 
@@ -541,7 +541,7 @@ describe("Block Registry", () => {
         },
       });
 
-      registry.register(block);
+      blockRegistry.register(block);
 
       renderSlot("test", {}, mockContext, mockAddr, () => "fallback");
 
@@ -557,7 +557,7 @@ describe("Block Registry", () => {
         renderHtml: ({ props }) => `<div>${props.count * 2}</div>`,
       });
 
-      registry.register(block);
+      blockRegistry.register(block);
 
       const result = renderSlot(
         "test",
@@ -583,7 +583,7 @@ describe("Block Registry", () => {
           `<div>${props.user.name} is ${props.user.age}</div>`,
       });
 
-      registry.register(block);
+      blockRegistry.register(block);
 
       const result = renderSlot(
         "test",
@@ -605,7 +605,7 @@ describe("Block Registry", () => {
         renderHtml: () => "<div>test</div>",
       });
 
-      registry.register(block);
+      blockRegistry.register(block);
 
       renderSlot(
         "test",

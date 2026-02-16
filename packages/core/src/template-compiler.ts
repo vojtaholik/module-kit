@@ -195,7 +195,7 @@ function compileNode(node: Node, indent: number): string {
 
   // Handle <template> tag - just render children
   if (tagName === "template") {
-    return compileNodes(element.childNodes || [], indent);
+    return compileNodes(getChildren(element), indent);
   }
 
   // Handle <render-slot> - delegate rendering to another block with fallback
