@@ -1,6 +1,6 @@
 {
   "name": "@vojtaholik/static-kit-cli",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "type": "module",
   "bin": {
     "static-kit": "./src/cli.ts"
