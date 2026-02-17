@@ -39,6 +39,31 @@ export {
   type BentoItem,
 } from "./bento-showcase.block.ts";
 
+// Type-safe block props — augment BlockPropsMap so page configs get autocomplete
+import type { HeroProps } from "./hero.block.ts";
+import type { FeatureGridProps } from "./feature-grid.block.ts";
+import type { LatestPostsProps } from "./latest-posts.block.ts";
+import type { SectionHeaderProps } from "./section-header.block.ts";
+import type { GridProps } from "./grid.block.ts";
+import type { TeaserProps } from "./teaser.block.ts";
+import type { BusinessCardProps } from "./business-card.block.ts";
+import type { CarouselProps } from "./carousel.block.ts";
+import type { BentoShowcaseProps } from "./bento-showcase.block.ts";
+
+declare module "@vojtaholik/static-kit-core" {
+  interface BlockPropsMap {
+    hero: HeroProps;
+    featureGrid: FeatureGridProps;
+    latestPosts: LatestPostsProps;
+    sectionHeader: SectionHeaderProps;
+    grid: GridProps;
+    teaser: TeaserProps;
+    businessCard: BusinessCardProps;
+    carousel: CarouselProps;
+    bentoShowcase: BentoShowcaseProps;
+  }
+}
+
 // Register all blocks
 import { blockRegistry } from "@vojtaholik/static-kit-core";
 import { heroBlock } from "./hero.block.ts";

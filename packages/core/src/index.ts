@@ -22,19 +22,6 @@ export {
   type SchemaAddress,
 } from "./schema-address.ts";
 
-// CMS schema utilities
-export {
-  cmsFieldTypeEnum,
-  cmsFieldSchema,
-  cmsBlockSchemaMapSchema,
-  createSchemaFromCmsFields,
-  createSchemaFromCmsBlocks,
-  type CmsFieldType,
-  type CmsField,
-  type CmsBlockSchema,
-  type CmsBlockSchemaMap,
-} from "./schema.ts";
-
 // Block registry
 export {
   defineBlock,
@@ -52,6 +39,7 @@ export {
 export {
   renderPage,
   renderBlock,
+  type BlockPropsMap,
   type BlockInstance,
   type RegionConfig,
   type PageConfig,

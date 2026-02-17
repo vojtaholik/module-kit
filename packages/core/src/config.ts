@@ -16,8 +16,6 @@ export const configSchema = z.object({
   publicPath: z.string().default("/public"),
   /** Dev server port */
   devPort: z.number().default(3000),
-  /** Path to cms-blocks file (relative to project root) */
-  cmsBlocksFile: z.string().optional(),
 });
 
 export type StaticKitConfig = z.infer<typeof configSchema>;

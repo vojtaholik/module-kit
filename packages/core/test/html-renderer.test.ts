@@ -3,10 +3,26 @@ import { z } from "zod/v4";
 import {
   renderPage,
   renderBlock,
-  type PageConfig,
-  type BlockInstance,
   type RenderPageOptions,
 } from "../src/html-renderer.ts";
+
+// Tests use arbitrary block types/props for runtime testing.
+// Loose aliases avoid conflicts with user-land BlockPropsMap augmentation.
+type TestPageConfig = {
+  id: string;
+  path: string;
+  title: string;
+  template: string;
+  density?: "compact" | "comfortable" | "relaxed";
+  regions: Record<string, { blocks: Array<{ id: string; type: string; props: Record<string, unknown>; layout?: Record<string, unknown> }> }>;
+  meta?: Record<string, string>;
+};
+type TestBlockInstance = {
+  id: string;
+  type: string;
+  props: Record<string, unknown>;
+  layout?: Record<string, unknown>;
+};
 import {
   blockRegistry,
   defineBlock,
@@ -31,7 +47,7 @@ describe("HTML Renderer", () => {
 </body>
 </html>`;
 
-      const page: PageConfig = {
+      const page: TestPageConfig = {
         id: "test-page",
         path: "/test",
         title: "Test Page Title",
@@ -70,7 +86,7 @@ describe("HTML Renderer", () => {
 </body>
 </html>`;
 
-      const page: PageConfig = {
+      const page: TestPageConfig = {
         id: "home",
         path: "/",
         title: "Home",
@@ -115,7 +131,7 @@ describe("HTML Renderer", () => {
 </body>
 </html>`;
 
-      const page: PageConfig = {
+      const page: TestPageConfig = {
         id: "home",
         path: "/",
         title: "Home",
@@ -165,7 +181,7 @@ describe("HTML Renderer", () => {
 </body>
 </html>`;
 
-      const page: PageConfig = {
+      const page: TestPageConfig = {
         id: "home",
         path: "/",
         title: "Home",
@@ -204,7 +220,7 @@ describe("HTML Renderer", () => {
 </body>
 </html>`;
 
-      const page: PageConfig = {
+      const page: TestPageConfig = {
         id: "home",
         path: "/",
         title: "Home",
@@ -234,7 +250,7 @@ describe("HTML Renderer", () => {
 </body>
 </html>`;
 
-      const page: PageConfig = {
+      const page: TestPageConfig = {
         id: "home",
         path: "/",
         title: "Home",
@@ -277,7 +293,7 @@ describe("HTML Renderer", () => {
 </body>
 </html>`;
 
-      const page: PageConfig = {
+      const page: TestPageConfig = {
         id: "home",
         path: "/",
         title: "Home",
@@ -312,7 +328,7 @@ describe("HTML Renderer", () => {
 </body>
 </html>`;
 
-      const page: PageConfig = {
+      const page: TestPageConfig = {
         id: "home",
         path: "/",
         title: "Home",
@@ -342,7 +358,7 @@ describe("HTML Renderer", () => {
 </body>
 </html>`;
 
-      const page: PageConfig = {
+      const page: TestPageConfig = {
         id: "home",
         path: "/",
         title: "Home",
@@ -385,7 +401,7 @@ describe("HTML Renderer", () => {
 </body>
 </html>`;
 
-      const page: PageConfig = {
+      const page: TestPageConfig = {
         id: "my-page",
         path: "/test",
         title: "Test",
@@ -434,7 +450,7 @@ describe("HTML Renderer", () => {
 </body>
 </html>`;
 
-      const page: PageConfig = {
+      const page: TestPageConfig = {
         id: "my-page",
         path: "/test",
         title: "Test",
@@ -481,7 +497,7 @@ describe("HTML Renderer", () => {
 </body>
 </html>`;
 
-      const page: PageConfig = {
+      const page: TestPageConfig = {
         id: "home",
         path: "/",
         title: "Home",
@@ -525,7 +541,7 @@ describe("HTML Renderer", () => {
 </body>
 </html>`;
 
-      const page: PageConfig = {
+      const page: TestPageConfig = {
         id: "home",
         path: "/",
         title: "Home",
@@ -569,7 +585,7 @@ describe("HTML Renderer", () => {
 
       blockRegistry.register(block);
 
-      const blockInstance: BlockInstance = {
+      const blockInstance: TestBlockInstance = {
         id: "card-1",
         type: "card",
         props: { title: "My Card" },
@@ -586,7 +602,7 @@ describe("HTML Renderer", () => {
     });
 
     test("throws on unknown block type", () => {
-      const blockInstance: BlockInstance = {
+      const blockInstance: TestBlockInstance = {
         id: "unknown-1",
         type: "unknown-type",
         props: {},
@@ -611,7 +627,7 @@ describe("HTML Renderer", () => {
 
       blockRegistry.register(block);
 
-      const blockInstance: BlockInstance = {
+      const blockInstance: TestBlockInstance = {
         id: "strict-1",
         type: "strict",
         props: { wrong: "prop" },
@@ -641,7 +657,7 @@ describe("HTML Renderer", () => {
 
       blockRegistry.register(block);
 
-      const blockInstance: BlockInstance = {
+      const blockInstance: TestBlockInstance = {
         id: "test-1",
         type: "test",
         props: {},
@@ -673,7 +689,7 @@ describe("HTML Renderer", () => {
 
       blockRegistry.register(block);
 
-      const blockInstance: BlockInstance = {
+      const blockInstance: TestBlockInstance = {
         id: "block-xyz",
         type: "test",
         props: {},
@@ -705,7 +721,7 @@ describe("HTML Renderer", () => {
 
       blockRegistry.register(block);
 
-      const blockInstance: BlockInstance = {
+      const blockInstance: TestBlockInstance = {
         id: "test-1",
         type: "test",
         props: {},
@@ -740,7 +756,7 @@ describe("HTML Renderer", () => {
 
       blockRegistry.register(block);
 
-      const blockInstance: BlockInstance = {
+      const blockInstance: TestBlockInstance = {
         id: "test-1",
         type: "test",
         props: {},

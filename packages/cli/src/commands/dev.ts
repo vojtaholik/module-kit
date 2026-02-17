@@ -65,18 +65,6 @@ const getPageByPath = pagesModule.getPageByPath as (
   path: string
 ) => PageConfig | undefined;
 
-// Try to load cms-blocks if it exists
-let cmsBlocks: Record<string, unknown> = {};
-try {
-  const cmsPath = config.cmsBlocksFile
-    ? join(cwd, config.cmsBlocksFile)
-    : join(cwd, "cms-blocks.ts");
-  const cmsBlocksModule = await import(`file://${cmsPath}`);
-  cmsBlocks = cmsBlocksModule.cmsBlocks ?? cmsBlocksModule.default ?? {};
-} catch {
-  // No cms-blocks file, that's fine
-}
-
 const PORT = config.devPort;
 const publicPath = config.publicPath; // e.g. "/public"
 
@@ -268,7 +256,6 @@ Bun.serve({
             title: p.title,
           })),
           blocks: blockRegistry.types(),
-          schemas: cmsBlocks,
         });
       }
 
@@ -312,7 +299,6 @@ Bun.serve({
                   templateFile: `${blocksDir}/${block.type}.block.html`,
                 }
               : null,
-            schema: block ? cmsBlocks[block.type] : null,
           });
         } catch (err) {
           return Response.json(

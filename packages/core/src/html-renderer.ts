@@ -5,14 +5,41 @@ import { blockRegistry, type RenderContext } from "./block-registry.ts";
 import type { SchemaAddress } from "./schema-address.ts";
 
 /**
- * Block instance in a page config
+ * Augmentable block props map — users register their block types via:
+ *
+ *   declare module "@vojtaholik/static-kit-core" {
+ *     interface BlockPropsMap {
+ *       hero: HeroProps;
+ *       // ...
+ *     }
+ *   }
  */
-export interface BlockInstance {
+export interface BlockPropsMap {}
+
+type TypedBlockInstance = {
+  [K in keyof BlockPropsMap & string]: {
+    id: string;
+    type: K;
+    props: BlockPropsMap[K];
+    layout?: Partial<LayoutProps>;
+  };
+}[keyof BlockPropsMap & string];
+
+type UntypedBlockInstance = {
   id: string;
   type: string;
   props: Record<string, unknown>;
   layout?: Partial<LayoutProps>;
-}
+};
+
+/**
+ * Block instance in a page config.
+ * When BlockPropsMap is augmented, known types get typed props + autocomplete.
+ * Arbitrary types still accepted via the fallback.
+ */
+export type BlockInstance = keyof BlockPropsMap extends never
+  ? UntypedBlockInstance
+  : TypedBlockInstance | (UntypedBlockInstance & { type: string & {} });
 
 /**
  * Region config - blocks in a named region

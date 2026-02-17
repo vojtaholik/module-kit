@@ -7,5 +7,4 @@ export default defineConfig({
   outDir: "dist",
   publicPath: "/public",
   devPort: 3000,
-  cmsBlocksFile: "example/cms-blocks.ts",
 });
