@@ -51,19 +51,35 @@ try {
   // svg/ directory doesn't exist, skip silently
 }
 
-// Dynamically import site's blocks and pages
-const blocksModule = await import(join(blocksDir, "index.ts"));
-const pagesModule = await import(join(pagesDir, "index.ts"));
+// Hot-reloadable module loader
+// bun --watch can't trace dynamic import() with computed paths,
+// so we use require() + cache clearing to reload pages/blocks in-process.
+let pages: PageConfig[];
+let getPageByPath: (path: string) => PageConfig | undefined;
 
-// Register all blocks at startup
-if (typeof blocksModule.registerAllBlocks === "function") {
-  blocksModule.registerAllBlocks();
+function clearModuleCache(...dirs: string[]) {
+  for (const key of Object.keys(require.cache)) {
+    if (dirs.some((dir) => key.startsWith(dir))) {
+      delete require.cache[key];
+    }
+  }
 }
 
-const pages: PageConfig[] = pagesModule.pages;
-const getPageByPath = pagesModule.getPageByPath as (
-  path: string
-) => PageConfig | undefined;
+function reloadModules() {
+  clearModuleCache(blocksDir, pagesDir);
+
+  blockRegistry.clear();
+  const blocksModule = require(join(blocksDir, "index.ts"));
+  if (typeof blocksModule.registerAllBlocks === "function") {
+    blocksModule.registerAllBlocks();
+  }
+
+  const pagesModule = require(join(pagesDir, "index.ts"));
+  pages = pagesModule.pages;
+  getPageByPath = pagesModule.getPageByPath;
+}
+
+reloadModules();
 
 const PORT = config.devPort;
 const publicPath = config.publicPath; // e.g. "/public"
@@ -144,20 +160,29 @@ async function handleFileChange(filename: string, dir: string) {
     return;
   }
 
-  // HTML template changed - recompile templates before reload
+  // HTML template changed - recompile templates, reload modules, then broadcast
   if (filename.endsWith(".block.html")) {
     console.log(`📝 Template changed: ${filename}`);
     await compileBlockTemplates({
       blocksDir,
       genDir: join(blocksDir, "gen"),
     });
-    // bun --watch will restart the server after recompile
-    // which triggers browser reload via SSE reconnect
+    try {
+      reloadModules();
+    } catch (err) {
+      console.error("⚠ Module reload failed:", err);
+    }
+    broadcastReload("full");
     return;
   }
 
-  // For other source files, just broadcast (bun --watch handles the restart)
+  // Source file changed - reload modules in-process, then broadcast
   if (filename.endsWith(".ts") || filename.endsWith(".js")) {
+    try {
+      reloadModules();
+    } catch (err) {
+      console.error("⚠ Module reload failed:", err);
+    }
     broadcastReload("full");
   }
 }
