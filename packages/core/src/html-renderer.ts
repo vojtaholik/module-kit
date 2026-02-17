@@ -3,6 +3,7 @@ import type { LayoutProps } from "./layout.ts";
 import { layoutPropsSchema } from "./layout.ts";
 import { blockRegistry, type RenderContext } from "./block-registry.ts";
 import type { SchemaAddress } from "./schema-address.ts";
+import { vlnaHtml } from "./vlna.ts";
 
 /**
  * Augmentable block props map — users register their block types via:
@@ -160,6 +161,9 @@ export async function renderPage(
     const marker = `<!--__REGION_CONTENT_${regionName}__-->`;
     html = html.replace(marker, content);
   }
+
+  // Czech typography: non-breaking spaces after single-char prepositions
+  html = vlnaHtml(html);
 
   // Inject dev overlay if in dev mode
   if (options.isDev) {
