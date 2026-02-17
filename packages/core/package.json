@@ -1,6 +1,6 @@
 {
   "name": "@vojtaholik/static-kit-core",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "type": "module",
   "exports": {
     ".": {
@@ -8,7 +8,9 @@
       "types": "./src/index.ts"
     }
   },
-  "files": ["src"],
+  "files": [
+    "src"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/vojtaholik/module-kit",
