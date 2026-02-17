@@ -10,12 +10,12 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@vojtaholik/static-kit-core": "^2.1.3"
+    "@vojtaholik/static-kit-core": "^2.1.4"
   },
   "devDependencies": {
     "@types/bun": "latest",
     "bun-types": "^1.3.4",
-    "@vojtaholik/static-kit-cli": "^2.1.3",
+    "@vojtaholik/static-kit-cli": "^2.1.4",
     "typescript": "^5"
   }
 }
