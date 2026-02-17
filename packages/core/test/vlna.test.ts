@@ -8,7 +8,7 @@ describe("vlna", () => {
       expect(vlna("Byl s kamarádem")).toBe("Byl s\u00A0kamarádem");
       expect(vlna("Jdu k řece")).toBe("Jdu k\u00A0řece");
       expect(vlna("Přišel z města")).toBe("Přišel z\u00A0města");
-      expect(vlna("Stalo se to u mostu")).toBe("Stalo se to u\u00A0mostu");
+      expect(vlna("Stalo se to u mostu")).toBe("Stalo se\u00A0to u\u00A0mostu");
       expect(vlna("Mluvil o tom")).toBe("Mluvil o\u00A0tom");
     });
 
@@ -34,10 +34,40 @@ describe("vlna", () => {
       expect(result).toBe("byl v\u00A0s\u00A0tím");
     });
 
-    test("does not modify multi-char words", () => {
-      expect(vlna("ve městě")).toBe("ve městě");
-      expect(vlna("se psem")).toBe("se psem");
-      expect(vlna("do lesa")).toBe("do lesa");
+    test("adds nbsp after short prepositions", () => {
+      expect(vlna("Bez kompromisů")).toBe("Bez\u00A0kompromisů");
+      expect(vlna("nad městem")).toBe("nad\u00A0městem");
+      expect(vlna("pod mostem")).toBe("pod\u00A0mostem");
+      expect(vlna("pro tebe")).toBe("pro\u00A0tebe");
+      expect(vlna("při práci")).toBe("při\u00A0práci");
+      expect(vlna("před domem")).toBe("před\u00A0domem");
+      expect(vlna("přes cestu")).toBe("přes\u00A0cestu");
+      expect(vlna("mezi stromy")).toBe("mezi\u00A0stromy");
+    });
+
+    test("adds nbsp after short conjunctions", () => {
+      expect(vlna("ani jeden")).toBe("ani\u00A0jeden");
+      expect(vlna("ale ne")).toBe("ale\u00A0ne");
+      expect(vlna("nebo dva")).toBe("nebo\u00A0dva");
+      expect(vlna("jako vždy")).toBe("jako\u00A0vždy");
+    });
+
+    test("adds nbsp after two-char prepositions", () => {
+      expect(vlna("do lesa")).toBe("do\u00A0lesa");
+      expect(vlna("na stole")).toBe("na\u00A0stole");
+      expect(vlna("se psem")).toBe("se\u00A0psem");
+      expect(vlna("ve městě")).toBe("ve\u00A0městě");
+      expect(vlna("od domu")).toBe("od\u00A0domu");
+      expect(vlna("po cestě")).toBe("po\u00A0cestě");
+      expect(vlna("za plotem")).toBe("za\u00A0plotem");
+      expect(vlna("ke škole")).toBe("ke\u00A0škole");
+      expect(vlna("ze dřeva")).toBe("ze\u00A0dřeva");
+    });
+
+    test("handles uppercase short prepositions", () => {
+      expect(vlna("BEZ kompromisů")).toBe("BEZ\u00A0kompromisů");
+      expect(vlna("Nad městem")).toBe("Nad\u00A0městem");
+      expect(vlna("NA stole")).toBe("NA\u00A0stole");
     });
 
     test("does not touch single char in middle of word", () => {
@@ -86,8 +116,8 @@ describe("vlna", () => {
 
   describe("vlnaHtml", () => {
     test("transforms text between tags", () => {
-      expect(vlnaHtml("<p>Šel v neděli</p>")).toBe(
-        "<p>Šel v\u00A0neděli</p>"
+      expect(vlnaHtml("<p>Šel jsem v neděli</p>")).toBe(
+        "<p>Šel jsem v\u00A0neděli</p>"
       );
     });
 
@@ -122,22 +152,36 @@ describe("vlna", () => {
     });
 
     test("transforms text outside skip tags", () => {
-      const input = "<p>v lese</p><code>v kódu</code><p>s přítelem</p>";
-      const expected =
-        "<p>v\u00A0lese</p><code>v kódu</code><p>s\u00A0přítelem</p>";
-      expect(vlnaHtml(input)).toBe(expected);
+      const input =
+        "<p>Šel v lese daleko</p><code>v kódu</code><p>Byl s přítelem včera</p>";
+      const result = vlnaHtml(input);
+      expect(result).toContain("v\u00A0lese");
+      expect(result).toContain("s\u00A0přítelem");
+      expect(result).toContain("v kódu"); // unchanged in <code>
     });
 
     test("handles nested tags", () => {
-      expect(vlnaHtml("<div><p>v lese</p></div>")).toBe(
-        "<div><p>v\u00A0lese</p></div>"
+      expect(vlnaHtml("<div><p>Šel v lese daleko</p></div>")).toBe(
+        "<div><p>Šel v\u00A0lese\u00A0daleko</p></div>"
       );
     });
 
     test("handles self-closing tags", () => {
-      expect(vlnaHtml("v lese<br/>s přítelem")).toBe(
-        "v\u00A0lese<br/>s\u00A0přítelem"
+      const result = vlnaHtml("Šel v lese<br/>Byl s přítelem");
+      expect(result).toContain("v\u00A0lese");
+      expect(result).toContain("s\u00A0přítelem");
+    });
+
+    test("prevents widows in text nodes", () => {
+      expect(vlnaHtml("<p>Nemusíte dělat žádné kompromisy</p>")).toBe(
+        "<p>Nemusíte dělat žádné\u00A0kompromisy</p>"
       );
+    });
+
+    test("prevents widow with Bez at line start", () => {
+      expect(
+        vlnaHtml("<p>Bez zbytečných látek navíc</p>")
+      ).toBe("<p>Bez\u00A0zbytečných látek\u00A0navíc</p>");
     });
 
     test("handles nested skip tags", () => {
@@ -151,7 +195,7 @@ describe("vlna", () => {
 <html>
 <head><title>Test</title><style>body { v: 1; }</style></head>
 <body>
-  <p>Šel v neděli s kamarádem</p>
+  <p>Šel v neděli s kamarádem do parku</p>
   <script>var a = 1;</script>
 </body>
 </html>`;
@@ -159,6 +203,7 @@ describe("vlna", () => {
       const result = vlnaHtml(input);
       expect(result).toContain("v\u00A0neděli");
       expect(result).toContain("s\u00A0kamarádem");
+      expect(result).toContain("do\u00A0parku");
       // script and style untouched
       expect(result).toContain("<script>var a = 1;</script>");
       expect(result).toContain("body { v: 1; }");

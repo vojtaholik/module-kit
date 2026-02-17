@@ -23,11 +23,21 @@
 const SINGLE_CHAR_RE = /(?<=\s|^)([ksvzouaiKSVZOUAI]) /g;
 
 /**
- * Replace space after single-char Czech prepositions/conjunctions with \u00A0.
+ * Short (2–3 char) Czech prepositions that shouldn't end a line.
+ * Case-insensitive match at word boundary.
+ */
+const SHORT_PREP_RE =
+  /(?<=\s|^)(bez|nad|pod|pro|při|přes|před|mezi|jako|ani|ale|nebo|Bez|Nad|Pod|Pro|Při|Přes|Před|Mezi|Jako|Ani|Ale|Nebo|BEZ|NAD|POD|PRO|PŘI|PŘES|PŘED|MEZI|JAKO|ANI|ALE|NEBO|do|ke|ku|na|od|po|se|ve|za|ze|Do|Ke|Ku|Na|Od|Po|Se|Ve|Za|Ze|DO|KE|KU|NA|OD|PO|SE|VE|ZA|ZE) /g;
+
+/**
+ * Replace space after Czech prepositions/conjunctions with \u00A0.
+ * Handles single-char (k, s, v…) and short words (bez, nad, pro…).
  * Plain text only — no HTML awareness.
  */
 export function vlna(text: string): string {
-  return text.replace(SINGLE_CHAR_RE, "$1\u00A0");
+  return text
+    .replace(SINGLE_CHAR_RE, "$1\u00A0")
+    .replace(SHORT_PREP_RE, "$1\u00A0");
 }
 
 /**
@@ -49,6 +59,7 @@ const SKIP_TAGS = new Set([
   "kbd",
   "var",
   "samp",
+  "title",
 ]);
 
 /**
@@ -101,7 +112,7 @@ export function vlnaHtml(html: string): string {
       if (inSkipTag) {
         result += text;
       } else {
-        result += vlna(text);
+        result += preventWidow(vlna(text));
       }
 
       i = textEnd;
