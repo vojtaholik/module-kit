@@ -1,6 +1,6 @@
 {
   "name": "@vojtaholik/create-static-kit",
-  "version": "2.1.2",
+  "version": "2.1.3",
   "type": "module",
   "bin": {
     "create-static-kit": "./src/index.ts"
