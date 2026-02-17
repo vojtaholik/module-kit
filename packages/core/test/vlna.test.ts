@@ -184,6 +184,12 @@ describe("vlna", () => {
       ).toBe("<p>Bez\u00A0zbytečných látek\u00A0navíc</p>");
     });
 
+    test("preserves space before inline tags (no widow prevention mid-paragraph)", () => {
+      expect(
+        vlnaHtml("<p>filtraci vody <strong>FILTIQ</strong> jsme vyvinuli</p>")
+      ).toContain("vody <strong>FILTIQ</strong>");
+    });
+
     test("handles nested skip tags", () => {
       expect(vlnaHtml("<pre><code>v neděli</code></pre>")).toBe(
         "<pre><code>v neděli</code></pre>"

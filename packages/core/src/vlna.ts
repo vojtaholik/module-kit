@@ -49,6 +49,10 @@ export function preventWidow(text: string): string {
   return text.replace(/\s(\S{1,15})\s*$/, "\u00A0$1");
 }
 
+/** Block-level closing tags — widow prevention only applies before these */
+const BLOCK_CLOSE_RE =
+  /^<\/(p|div|li|h[1-6]|td|th|blockquote|figcaption|section|article|dd|dt|summary|caption)\b/i;
+
 /** Tags whose text content should NOT be transformed */
 const SKIP_TAGS = new Set([
   "script",
@@ -112,7 +116,11 @@ export function vlnaHtml(html: string): string {
       if (inSkipTag) {
         result += text;
       } else {
-        result += preventWidow(vlna(text));
+        const transformed = vlna(text);
+        // Only prevent widows before a closing block tag or end of string
+        const rest = html.slice(textEnd);
+        const atBlockEnd = nextTag === -1 || BLOCK_CLOSE_RE.test(rest);
+        result += atBlockEnd ? preventWidow(transformed) : transformed;
       }
 
       i = textEnd;
