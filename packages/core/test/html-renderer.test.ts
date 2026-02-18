@@ -573,6 +573,70 @@ describe("HTML Renderer", () => {
       expect(receivedContext.layout.tone).toBe("accent");
       expect(receivedContext.layout.density).toBe("compact");
     });
+
+    test("appends cacheBust to css and js references", async () => {
+      const template = `<!DOCTYPE html>
+<html>
+<head>
+  <title>Test</title>
+  <link rel="stylesheet" href="public/css/styles.css" />
+</head>
+<body>
+  <div data-region="main"></div>
+  <script src="public/js/index.js"></script>
+</body>
+</html>`;
+
+      const page: TestPageConfig = {
+        id: "home",
+        path: "/",
+        title: "Home",
+        template: "base.html",
+        regions: { main: { blocks: [] } },
+      };
+
+      const html = await renderPage(page, {
+        templateDir: "/templates",
+        readFile: async () => template,
+        isDev: false,
+        cacheBust: 1708300000000,
+      });
+
+      expect(html).toContain('href="public/css/styles.css?v=1708300000000"');
+      expect(html).toContain('src="public/js/index.js?v=1708300000000"');
+    });
+
+    test("does not cacheBust when option is omitted", async () => {
+      const template = `<!DOCTYPE html>
+<html>
+<head>
+  <title>Test</title>
+  <link rel="stylesheet" href="public/css/styles.css" />
+</head>
+<body>
+  <div data-region="main"></div>
+  <script src="public/js/index.js"></script>
+</body>
+</html>`;
+
+      const page: TestPageConfig = {
+        id: "home",
+        path: "/",
+        title: "Home",
+        template: "base.html",
+        regions: { main: { blocks: [] } },
+      };
+
+      const html = await renderPage(page, {
+        templateDir: "/templates",
+        readFile: async () => template,
+        isDev: false,
+      });
+
+      expect(html).toContain('href="public/css/styles.css"');
+      expect(html).toContain('src="public/js/index.js"');
+      expect(html).not.toContain("?v=");
+    });
   });
 
   describe("renderBlock", () => {

@@ -86,6 +86,8 @@ export interface RenderPageOptions {
   assetBase?: string;
   /** Function to read template file content */
   readFile?: (path: string) => Promise<string>;
+  /** Timestamp to append as ?v= to .css and .js references for cache-busting */
+  cacheBust?: number;
 }
 
 /**
@@ -125,6 +127,23 @@ export async function renderPage(
 
     if (node.nodeName === 'main' && page.density) {
       setAttr(node, "data-density", page.density);
+    }
+
+    // Cache-bust .css and .js references
+    if (options.cacheBust) {
+      if (node.nodeName === "link") {
+        const rel = getAttr(node, "rel");
+        const href = getAttr(node, "href");
+        if (rel === "stylesheet" && href && href.endsWith(".css")) {
+          setAttr(node, "href", `${href}?v=${options.cacheBust}`);
+        }
+      }
+      if (node.nodeName === "script") {
+        const src = getAttr(node, "src");
+        if (src && src.endsWith(".js")) {
+          setAttr(node, "src", `${src}?v=${options.cacheBust}`);
+        }
+      }
     }
 
     // Process regions - inject a marker that we'll replace after serialization

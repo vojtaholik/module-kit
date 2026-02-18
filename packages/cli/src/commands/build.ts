@@ -72,11 +72,13 @@ async function build() {
 
   // Step 3: Render all pages (flat structure in dist/)
   console.log("\n📄 Rendering pages...");
+  const buildTimestamp = Date.now();
   for (const page of pages) {
     const html = await renderPage(page, {
       templateDir: pagesDir,
       isDev: false,
       assetBase: "/",
+      cacheBust: buildTimestamp,
     });
 
     // Flat output: /about -> dist/about.html, / -> dist/index.html
