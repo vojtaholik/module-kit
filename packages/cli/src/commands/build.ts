@@ -20,6 +20,7 @@ import {
 import { loadConfig, resolvePath } from "../config-loader.ts";
 import { processCSS } from "../css-processor.ts";
 import { compileSpritesheet } from "../sprite-compiler.ts";
+import { processHtmlOutput } from "../html-output.ts";
 
 const cwd = process.cwd();
 const config = await loadConfig(cwd);
@@ -74,12 +75,13 @@ async function build() {
   console.log("\n📄 Rendering pages...");
   const buildTimestamp = Date.now();
   for (const page of pages) {
-    const html = await renderPage(page, {
+    let html = await renderPage(page, {
       templateDir: pagesDir,
       isDev: false,
       assetBase: "/",
       cacheBust: buildTimestamp,
     });
+    html = await processHtmlOutput(html, config.htmlOutput);
 
     // Flat output: /about -> dist/about.html, / -> dist/index.html
     const fileName =

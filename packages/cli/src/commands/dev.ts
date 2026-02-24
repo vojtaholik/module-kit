@@ -21,6 +21,7 @@ import {
 import { loadConfig, resolvePath } from "../config-loader.ts";
 import { processCSS } from "../css-processor.ts";
 import { compileSpritesheet } from "../sprite-compiler.ts";
+import { processHtmlOutput } from "../html-output.ts";
 
 const cwd = process.cwd();
 const config = await loadConfig(cwd);
@@ -365,11 +366,12 @@ Bun.serve({
       const page = getPageByPath(pagePath);
 
       if (page) {
-        const html = await renderPage(page, {
+        let html = await renderPage(page, {
           templateDir: pagesDir,
           isDev: true,
           assetBase: "/",
         });
+        html = await processHtmlOutput(html, config.htmlOutput);
 
         return new Response(html, {
           headers: { "Content-Type": "text/html" },

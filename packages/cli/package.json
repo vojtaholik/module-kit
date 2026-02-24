@@ -18,10 +18,15 @@
   },
   "dependencies": {
     "@vojtaholik/static-kit-core": "workspace:*",
-    "lightningcss": "^1.28.2",
-    "browserslist": "^4.24.4"
+    "browserslist": "^4.24.4",
+    "html-minifier-terser": "^7.2.0",
+    "js-beautify": "^1.15.4",
+    "lightningcss": "^1.28.2"
   },
   "peerDependencies": {
     "typescript": "^5"
+  },
+  "devDependencies": {
+    "@types/js-beautify": "^1.14.3"
   }
 }

@@ -16,6 +16,8 @@ export const configSchema = z.object({
   publicPath: z.string().default("/public"),
   /** Dev server port */
   devPort: z.number().default(3000),
+  /** HTML output format: "formatted" (pretty-printed) or "minified" */
+  htmlOutput: z.enum(["formatted", "minified"]).default("formatted"),
 });
 
 export type StaticKitConfig = z.infer<typeof configSchema>;
