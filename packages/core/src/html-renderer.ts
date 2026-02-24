@@ -184,9 +184,11 @@ export async function renderPage(
   // Czech typography: non-breaking spaces after single-char prepositions
   html = vlnaHtml(html);
 
-  // Inject dev overlay if in dev mode
+  // Dev mode: inject overlay. Production: strip dev attributes.
   if (options.isDev) {
     html = injectDevOverlay(html);
+  } else {
+    html = stripDevAttributes(html);
   }
 
   return html;
@@ -287,6 +289,15 @@ function setAttr(node: Node, name: string, value: string): void {
   } else {
     element.attrs.push({ name, value });
   }
+}
+
+/**
+ * Strip dev-only attributes (data-block-id, data-schema-address) from production HTML
+ */
+function stripDevAttributes(html: string): string {
+  return html
+    .replace(/\s+data-block-id="[^"]*"/g, "")
+    .replace(/\s+data-schema-address="[^"]*"/g, "");
 }
 
 /**
