@@ -15,6 +15,7 @@ import { Glob } from "bun";
 import {
   renderPage,
   compileBlockTemplates,
+  rewriteBasePath,
   type PageConfig,
 } from "@vojtaholik/static-kit-core";
 import { loadConfig, resolvePath } from "../config-loader.ts";
@@ -81,6 +82,7 @@ async function build() {
       assetBase: "/",
       cacheBust: buildTimestamp,
     });
+    html = rewriteBasePath(html, config.basePath);
     html = await processHtmlOutput(html, config.htmlOutput);
 
     // Flat output: /about -> dist/about.html, / -> dist/index.html

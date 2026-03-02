@@ -59,3 +59,6 @@ export { vlna, vlnaHtml, preventWidow } from "./vlna.ts";
 
 // Configuration
 export { configSchema, defineConfig, type StaticKitConfig } from "./config.ts";
+
+// Base path rewriting
+export { rewriteBasePath } from "./base-path.ts";
