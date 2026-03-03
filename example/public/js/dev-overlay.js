@@ -16,9 +16,13 @@
   var maxReconnectAttempts = 20;
   var wasConnected = false;
   var lastServerTime = null;
+  var source = null;
 
   function connectHMR() {
-    var source = new EventSource("/__hmr");
+    if (source) {
+      source.close();
+    }
+    source = new EventSource("/__hmr");
 
     source.onopen = function () {
       console.log("[HMR] Connected");
@@ -139,6 +143,16 @@
 
     console.log("[HMR] SVG sprites reloaded (" + uses.length + " refs)");
   }
+
+  // Clean up SSE connection on navigation to prevent connection pool exhaustion
+  function cleanupHMR() {
+    if (source) {
+      source.close();
+      source = null;
+    }
+  }
+  window.addEventListener("beforeunload", cleanupHMR);
+  window.addEventListener("pagehide", cleanupHMR);
 
   // Start HMR connection
   connectHMR();
