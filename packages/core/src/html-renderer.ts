@@ -134,13 +134,13 @@ export async function renderPage(
       if (node.nodeName === "link") {
         const rel = getAttr(node, "rel");
         const href = getAttr(node, "href");
-        if (rel === "stylesheet" && href && href.endsWith(".css")) {
+        if (rel === "stylesheet" && href && href.endsWith(".css") && !href.includes("?v=")) {
           setAttr(node, "href", `${href}?v=${options.cacheBust}`);
         }
       }
       if (node.nodeName === "script") {
         const src = getAttr(node, "src");
-        if (src && src.endsWith(".js")) {
+        if (src && src.endsWith(".js") && !src.includes("?v=")) {
           setAttr(node, "src", `${src}?v=${options.cacheBust}`);
         }
       }
@@ -176,9 +176,11 @@ export async function renderPage(
   );
 
   // Replace markers with actual region content
+  // Uses split/join instead of replace() to avoid issues with $ in content
+  // being interpreted as replacement patterns
   for (const [regionName, content] of Object.entries(regionContent)) {
     const marker = `<!--__REGION_CONTENT_${regionName}__-->`;
-    html = html.replace(marker, content);
+    html = html.split(marker).join(content);
   }
 
   // Czech typography: non-breaking spaces after single-char prepositions

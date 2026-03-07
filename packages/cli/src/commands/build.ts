@@ -99,10 +99,8 @@ async function build() {
   console.log("\n📦 Copying public assets...");
   const outPublicDir = join(outDir, publicPathDir);
 
-  const devOnlyFiles = new Set(["js/dev-overlay.js"]);
   const publicGlob = new Glob("**/*");
   for await (const file of publicGlob.scan(publicDir)) {
-    if (devOnlyFiles.has(file)) continue;
     const srcFile = join(publicDir, file);
     const destFile = join(outPublicDir, file);
 
