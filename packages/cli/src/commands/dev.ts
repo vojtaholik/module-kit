@@ -210,9 +210,10 @@ Bun.serve({
     const path = url.pathname;
 
     try {
-      // Dev overlay (special internal asset)
+      // Dev overlay — served from the CLI package (not the user's publicDir)
       if (path === "/__dev-overlay.js") {
-        const js = await Bun.file(join(publicDir, "js/dev-overlay.js")).text();
+        const overlayPath = join(import.meta.dir, "../client/dev-overlay.js");
+        const js = await Bun.file(overlayPath).text();
         return new Response(js, {
           headers: { "Content-Type": "application/javascript" },
         });

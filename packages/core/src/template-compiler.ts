@@ -434,7 +434,10 @@ function compileRenderSlot(element: Element, indent: number): string {
   } else if (indexExpr) {
     // Build prop path from index (assumes we're iterating over an array prop)
     // This creates paths like "posts[0]", "posts[1]" etc.
-    addrExpr = `{ ...addr, propPath: (addr.propPath ? addr.propPath + "[" + ${indexExpr} + "]" : "[" + ${indexExpr} + "]") }`;
+    // When addr.propPath is set, appends index: "posts[0]"
+    // When addr.propPath is missing, uses the :props expression base as prefix
+    const propsBase = propsExpr.replace(/^props\./, "").split(/[.[]/)[0];
+    addrExpr = `{ ...addr, propPath: (addr.propPath ? addr.propPath + "[" + ${indexExpr} + "]" : "${propsBase}[" + ${indexExpr} + "]") }`;
   } else {
     // No prop path
     addrExpr = "addr";
@@ -477,7 +480,16 @@ function compileTextWithInterpolation(text: string, indent: number): string {
 
   // Split on {{{ ... }}} (raw) and {{ ... }} (escaped)
   // Order matters: match triple braces first
-  const parts = text.split(/(\{\{\{.+?\}\}\}|\{\{.+?\}\})/g);
+  // Uses [\s\S] instead of . to support multiline expressions
+  const parts = text.split(/(\{\{\{[\s\S]+?\}\}\}|\{\{[\s\S]+?\}\})/g);
+
+  // Detect unmatched braces in static text parts (every other part is static)
+  for (let j = 0; j < parts.length; j += 2) {
+    const staticPart = parts[j];
+    if (staticPart && /\{\{/.test(staticPart)) {
+      throw new Error(`Unmatched interpolation braces in template text: "${staticPart.trim().slice(0, 60)}"`);
+    }
+  }
 
   for (let i = 0; i < parts.length; i++) {
     const part = parts[i];
