@@ -255,9 +255,10 @@ function compileElement(element: Element, indent: number): string {
         continue;
       }
       // Conditionally render attribute only if value is truthy
-      code += `${pad}const _${attrName}Val = ${attr.value};\n`;
-      code += `${pad}if (_${attrName}Val) {\n`;
-      code += `${pad}  out += " ${attrName}=\\"" + escapeAttr(_${attrName}Val) + "\\"";\n`;
+      const varName = attrName.replace(/[^a-zA-Z0-9_]/g, "_");
+      code += `${pad}const _${varName}Val = ${attr.value};\n`;
+      code += `${pad}if (_${varName}Val) {\n`;
+      code += `${pad}  out += " ${attrName}=\\"" + escapeAttr(_${varName}Val) + "\\"";\n`;
       code += `${pad}}\n`;
     }
   }

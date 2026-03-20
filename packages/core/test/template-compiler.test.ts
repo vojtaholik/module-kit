@@ -288,8 +288,8 @@ describe("Template Compiler", () => {
       const template = '<div :data-id="props.id">content</div>';
       const result = compileTemplate(template, "test-block");
 
-      expect(result).toContain("_data-idVal = props.id");
-      expect(result).toContain("escapeAttr(_data-idVal)");
+      expect(result).toContain("_data_idVal = props.id");
+      expect(result).toContain("escapeAttr(_data_idVal)");
     });
   });
 
