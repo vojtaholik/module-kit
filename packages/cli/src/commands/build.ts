@@ -111,13 +111,14 @@ async function build() {
       // Process CSS files through lightningcss
       if (file.endsWith(".css")) {
         const cssBytes = new Uint8Array(await bunFile.arrayBuffer());
+        const shouldMinify = config.cssOutput === "minified";
         const result = processCSS({
           filename: srcFile,
           code: cssBytes,
-          minify: true,
+          minify: shouldMinify,
         });
         await Bun.write(destFile, result.code);
-        console.log(`  ✓ ${config.publicPath}/${file} (minified)`);
+        console.log(`  ✓ ${config.publicPath}/${file}${shouldMinify ? " (minified)" : ""}`);
       } else {
         await Bun.write(destFile, await bunFile.arrayBuffer());
         console.log(`  ✓ ${config.publicPath}/${file}`);
