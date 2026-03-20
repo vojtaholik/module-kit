@@ -120,8 +120,8 @@ export async function renderPage(
       }
     }
 
-    // Update <html> attributes
-    if (node.nodeName === "html") {
+    // Update <html> attributes (data-page-id only in dev for HMR)
+    if (node.nodeName === "html" && options.isDev) {
       setAttr(node, "data-page-id", page.id);
     }
 

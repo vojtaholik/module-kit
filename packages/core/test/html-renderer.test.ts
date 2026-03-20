@@ -66,7 +66,7 @@ describe("HTML Renderer", () => {
       const html = await renderPage(page, options);
 
       expect(html).toContain("<title>Test Page Title</title>");
-      expect(html).toContain('data-page-id="test-page"');
+      expect(html).not.toContain('data-page-id');
     });
 
     test("renders page with single block in region", async () => {
