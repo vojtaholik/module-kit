@@ -18,6 +18,8 @@ export const configSchema = z.object({
   devPort: z.number().default(3000),
   /** HTML output format: "formatted" (pretty-printed) or "minified" */
   htmlOutput: z.enum(["formatted", "minified"]).default("formatted"),
+  /** CSS output format: "formatted" (as-is) or "minified" */
+  cssOutput: z.enum(["formatted", "minified"]).default("formatted"),
   /** URL path prefix for production builds — all internal links get this prefix */
   basePath: z
     .string()
