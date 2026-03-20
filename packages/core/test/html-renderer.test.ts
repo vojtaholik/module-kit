@@ -237,7 +237,7 @@ describe("HTML Renderer", () => {
 
       const html = await renderPage(page, options);
 
-      expect(html).toContain('data-region="main"');
+      expect(html).not.toContain('data-region');
       expect(html).not.toContain("undefined");
     });
 
@@ -316,7 +316,7 @@ describe("HTML Renderer", () => {
 
       // Should not crash, just skip the invalid block
       expect(html).toBeTruthy();
-      expect(html).not.toContain("<div>");
+      expect(html).not.toContain("strict-block");
     });
 
     test("injects dev overlay in dev mode", async () => {

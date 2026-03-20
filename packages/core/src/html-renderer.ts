@@ -166,6 +166,11 @@ export async function renderPage(
             data: `__REGION_CONTENT_${regionName}__`,
           } as Node,
         ];
+
+        // Strip data-region in production
+        if (!options.isDev) {
+          removeAttr(node, "data-region");
+        }
       }
     }
   });
@@ -290,6 +295,13 @@ function setAttr(node: Node, name: string, value: string): void {
     existing.value = value;
   } else {
     element.attrs.push({ name, value });
+  }
+}
+
+function removeAttr(node: Node, name: string): void {
+  const element = node as Element;
+  if (element.attrs) {
+    element.attrs = element.attrs.filter((a) => a.name !== name);
   }
 }
 
