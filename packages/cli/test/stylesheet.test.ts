@@ -54,36 +54,36 @@ describe("path helpers", () => {
 });
 
 describe("resolveStylesheet", () => {
-  test('preprocessor "none" ignores .scss siblings', async () => {
-    expect(await resolveStylesheet(publicDir, "css/styles.css", "none")).toBeNull();
-    expect(await resolveStylesheet(publicDir, "css/plain.css", "none")).toEqual({
+  test("scss disabled ignores .scss siblings", async () => {
+    expect(await resolveStylesheet(publicDir, "css/styles.css", false)).toBeNull();
+    expect(await resolveStylesheet(publicDir, "css/plain.css", false)).toEqual({
       kind: "css",
       path: join(publicDir, "css/plain.css"),
     });
   });
 
-  test('preprocessor "scss" finds the .scss source for a .css path', async () => {
-    expect(await resolveStylesheet(publicDir, "css/styles.css", "scss")).toEqual({
+  test("scss enabled finds the .scss source for a .css path", async () => {
+    expect(await resolveStylesheet(publicDir, "css/styles.css", true)).toEqual({
       kind: "sass",
       path: join(publicDir, "css/styles.scss"),
     });
   });
 
   test("plain .css still wins when it is the only source", async () => {
-    expect(await resolveStylesheet(publicDir, "css/plain.css", "scss")).toEqual({
+    expect(await resolveStylesheet(publicDir, "css/plain.css", true)).toEqual({
       kind: "css",
       path: join(publicDir, "css/plain.css"),
     });
   });
 
   test("throws when both .css and .scss would produce the same file", async () => {
-    await expect(resolveStylesheet(publicDir, "css/both.css", "scss")).rejects.toThrow(
+    await expect(resolveStylesheet(publicDir, "css/both.css", true)).rejects.toThrow(
       /Ambiguous stylesheet/
     );
   });
 
   test("returns null for missing stylesheet", async () => {
-    expect(await resolveStylesheet(publicDir, "css/nope.css", "scss")).toBeNull();
+    expect(await resolveStylesheet(publicDir, "css/nope.css", true)).toBeNull();
   });
 });
 
@@ -143,15 +143,15 @@ describe("compileStylesheet", () => {
 });
 
 describe("sassHintIfDisabled", () => {
-  test("hints when sass files exist but preprocessor is off", async () => {
-    const hint = await sassHintIfDisabled(publicDir, "none");
-    expect(hint).toMatch(/cssPreprocessor: "scss"/);
+  test("hints when sass files exist but scss is off", async () => {
+    const hint = await sassHintIfDisabled(publicDir, false);
+    expect(hint).toMatch(/scss: true/);
   });
 
-  test("silent when preprocessor is on or no sass files", async () => {
-    expect(await sassHintIfDisabled(publicDir, "scss")).toBeNull();
+  test("silent when scss is on or no sass files", async () => {
+    expect(await sassHintIfDisabled(publicDir, true)).toBeNull();
     const empty = await mkdtemp(join(tmpdir(), "static-kit-empty-"));
-    expect(await sassHintIfDisabled(empty, "none")).toBeNull();
+    expect(await sassHintIfDisabled(empty, false)).toBeNull();
     await rm(empty, { recursive: true, force: true });
   });
 });

@@ -58,9 +58,9 @@ try {
   // svg/ directory doesn't exist, skip silently
 }
 
-// Nudge when .scss files exist but the preprocessor is off
+// Nudge when .scss files exist but scss is off
 {
-  const hint = await sassHintIfDisabled(publicDir, config.cssPreprocessor);
+  const hint = await sassHintIfDisabled(publicDir, config.scss);
   if (hint) console.warn(`ℹ ${hint}`);
 }
 
@@ -370,7 +370,7 @@ Bun.serve({
             const source = await resolveStylesheet(
               publicDir,
               relativePath,
-              config.cssPreprocessor
+              config.scss
             );
             if (source) {
               const css = await compileStylesheetCached({
@@ -392,7 +392,7 @@ Bun.serve({
         }
 
         // Sass sources are build inputs, never published — mirror that in dev
-        if (config.cssPreprocessor !== "none" && isSassSource(relativePath)) {
+        if (config.scss && isSassSource(relativePath)) {
           return new Response("Not Found", { status: 404 });
         }
 

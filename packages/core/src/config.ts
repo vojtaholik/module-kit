@@ -21,11 +21,11 @@ export const configSchema = z.object({
   /** CSS output format: "formatted" (as-is) or "minified" */
   cssOutput: z.enum(["formatted", "minified"]).default("formatted"),
   /**
-   * Opt-in CSS preprocessor. "scss" compiles `*.scss` / `*.sass` in publicDir
-   * to `.css` at the same path (partials `_*.scss` are skipped). Requires
-   * `sass` or `sass-embedded` to be installed in the project.
+   * Opt-in SCSS. When true, `*.scss` / `*.sass` in publicDir compile to `.css`
+   * at the same path (partials `_*.scss` are skipped). Requires `sass` or
+   * `sass-embedded` to be installed in the project.
    */
-  cssPreprocessor: z.enum(["none", "scss"]).default("none"),
+  scss: z.boolean().default(false),
   /** URL path prefix for production builds — all internal links get this prefix */
   basePath: z
     .string()

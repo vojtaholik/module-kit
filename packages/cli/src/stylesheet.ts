@@ -2,12 +2,12 @@
  * Stylesheet pipeline
  *
  * Resolves a requested/emitted `.css` path in publicDir to its source
- * (plain CSS or, when `cssPreprocessor: "scss"` is enabled, a `.scss`/`.sass`
+ * (plain CSS or, when `scss: true` is enabled, a `.scss`/`.sass`
  * sibling), compiles it with Sass if needed, then runs the result through
  * lightningcss (nesting, prefixes, optional minify).
  *
  * SCSS is opt-in:
- * - `cssPreprocessor` defaults to "none" — nothing changes for existing sites.
+ * - `scss` defaults to false — nothing changes for existing sites.
  * - `sass` (or `sass-embedded`) is an optional peer dependency, loaded lazily
  *   only when the flag is on, with a clear install hint when missing.
  * - Output keeps the `.css` path (`css/styles.scss` → `css/styles.css`), so
@@ -19,10 +19,7 @@ import { dirname, join, basename } from "node:path";
 import { stat } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { Glob } from "bun";
-import type { StaticKitConfig } from "@vojtaholik/static-kit-core";
 import { processCSSString } from "./css-processor.ts";
-
-export type CssPreprocessor = StaticKitConfig["cssPreprocessor"];
 
 /** Source extensions handled by the Sass compiler (syntax is picked per extension) */
 export const SASS_EXTENSIONS = [".scss", ".sass"] as const;
@@ -77,7 +74,7 @@ export function loadSass(): Promise<SassModule> {
       }
       throw new Error(
         [
-          `cssPreprocessor is set to "scss" but no Sass compiler is installed.`,
+          `scss: true is set but no Sass compiler is installed.`,
           `Install one of:`,
           `  bun add -d sass            # pure JS, zero native deps`,
           `  bun add -d sass-embedded   # native dart-sass, faster on big projects`,
@@ -172,20 +169,20 @@ export interface StylesheetSource {
 /**
  * Given a `.css` path relative to publicDir, find what should produce it.
  *
- * - preprocessor "none": only the real `.css` file counts.
- * - preprocessor "scss": a real `.css` wins if it's alone; a `.scss`/`.sass`
+ * - scss disabled: only the real `.css` file counts.
+ * - scss enabled: a real `.css` wins if it's alone; a `.scss`/`.sass`
  *   sibling is used otherwise. Having both is an error — it would be
  *   ambiguous which one ends up in dist.
  */
 export async function resolveStylesheet(
   publicDir: string,
   relCssPath: string,
-  preprocessor: CssPreprocessor
+  scss: boolean
 ): Promise<StylesheetSource | null> {
   const cssPath = join(publicDir, relCssPath);
   const cssExists = await Bun.file(cssPath).exists();
 
-  if (preprocessor === "none") {
+  if (!scss) {
     return cssExists ? { kind: "css", path: cssPath } : null;
   }
 
@@ -312,19 +309,19 @@ export function invalidateStylesheetCache(): void {
 }
 
 // ---------------------------------------------------------------------------
-// Discoverability — nudge when .scss files exist but the flag is off
+// Discoverability — nudge when .scss files exist but scss is off
 // ---------------------------------------------------------------------------
 
 /**
- * Returns a hint message when Sass sources exist in publicDir but the
- * preprocessor is disabled (they'd be copied verbatim / served raw).
+ * Returns a hint message when Sass sources exist in publicDir but scss is
+ * disabled (they'd be copied verbatim / served raw).
  * Returns null when there's nothing to say.
  */
 export async function sassHintIfDisabled(
   publicDir: string,
-  preprocessor: CssPreprocessor
+  scss: boolean
 ): Promise<string | null> {
-  if (preprocessor !== "none") return null;
+  if (scss) return null;
 
   const glob = new Glob("**/*.{scss,sass}");
   const found: string[] = [];
@@ -340,7 +337,7 @@ export async function sassHintIfDisabled(
 
   return (
     `Found Sass sources (${found.join(", ")}${found.length >= 3 ? ", …" : ""}) ` +
-    `but cssPreprocessor is "none" — they won't be compiled.\n` +
-    `   Enable with cssPreprocessor: "scss" in static-kit.config.ts and run: bun add -d sass`
+    `but scss is not enabled — they won't be compiled.\n` +
+    `   Enable with scss: true in static-kit.config.ts and run: bun add -d sass`
   );
 }

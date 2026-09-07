@@ -6,7 +6,7 @@
  * 2. Load and validate all page configs
  * 3. Render each page to HTML (no dev overlay)
  * 4. Copy publicDir to dist/{publicPath}/ (1:1 structure);
- *    CSS goes through lightningcss, .scss/.sass → .css when cssPreprocessor is "scss"
+ *    CSS goes through lightningcss, .scss/.sass → .css when scss is enabled
  * 5. Write HTML files to dist/ (flat structure)
  */
 
@@ -107,8 +107,7 @@ async function build() {
   console.log("\n📦 Copying public assets...");
   const outPublicDir = join(outDir, publicPathDir);
 
-  const sassEnabled = config.cssPreprocessor !== "none";
-  const sassHint = await sassHintIfDisabled(publicDir, config.cssPreprocessor);
+  const sassHint = await sassHintIfDisabled(publicDir, config.scss);
   if (sassHint) console.warn(`  ℹ ${sassHint}`);
 
   const shouldMinify = config.cssOutput === "minified";
@@ -119,11 +118,11 @@ async function build() {
     const srcFile = join(publicDir, file);
 
     // Sass sources are inputs, not assets: partials vanish, entries emit .css
-    if (sassEnabled && isSassSource(file)) {
+    if (config.scss && isSassSource(file)) {
       if (isSassPartial(file)) continue;
       const cssFile = toCssPath(file);
       if (emittedCss.has(cssFile)) continue; // already produced by its .css/.scss twin
-      const source = await resolveStylesheet(publicDir, cssFile, config.cssPreprocessor);
+      const source = await resolveStylesheet(publicDir, cssFile, config.scss);
       if (!source) continue;
       const { css } = await compileStylesheet({ source, publicDir, minify: shouldMinify, cwd });
       const destFile = join(outPublicDir, cssFile);
@@ -146,7 +145,7 @@ async function build() {
       if (file.endsWith(".css")) {
         if (emittedCss.has(file)) continue;
         // resolveStylesheet throws when a .scss twin also exists (ambiguous output)
-        const source = await resolveStylesheet(publicDir, file, config.cssPreprocessor);
+        const source = await resolveStylesheet(publicDir, file, config.scss);
         if (!source) continue;
         const { css } = await compileStylesheet({ source, publicDir, minify: shouldMinify, cwd });
         await Bun.write(destFile, css);

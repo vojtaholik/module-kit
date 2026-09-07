@@ -8,5 +8,5 @@ export default defineConfig({
   publicPath: "/public",
   devPort: 3000,
   // Optional: compile public/**/*.scss → .css (requires `bun add -d sass`)
-  // cssPreprocessor: "scss",
+  // scss: true,
 });

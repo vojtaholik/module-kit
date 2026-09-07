@@ -418,7 +418,7 @@ Plain CSS (with native nesting via lightningcss) is the default and needs nothin
 ```ts
 // static-kit.config.ts
 export default defineConfig({
-  cssPreprocessor: "scss",
+  scss: true,
 });
 ```
 
@@ -435,7 +435,7 @@ How it works:
 - Dev server compiles on request with an mtime-validated cache; editing any file in the `@use` graph hot-reloads.
 - A compile error shows in the terminal and as a comment at the top of the served CSS instead of a blank page.
 - `styles.css` **and** `styles.scss` side by side is an error — one output, one source.
-- `.scss` files present but `cssPreprocessor` left at `"none"`? The CLI prints a hint and copies them verbatim, as before.
+- `.scss` files present but `scss` left off? The CLI prints a hint and copies them verbatim, as before.
 
 ## Dev Server Features
 
