@@ -168,13 +168,9 @@ async function handleFileChange(filename: string, dir: string) {
     return;
   }
 
-  if (filename.endsWith(".css")) {
-    broadcastReload("css");
-    return;
-  }
-
-  // Sass source (incl. partials) changed - drop compiled cache, hot-swap CSS
-  if (isSassSource(filename)) {
+  // Stylesheet source changed - drop compiled cache, hot-swap CSS.
+  // (.css always; .scss/.sass only when they are actually compiled)
+  if (filename.endsWith(".css") || (config.scss && isSassSource(filename))) {
     invalidateStylesheetCache();
     broadcastReload("css");
     return;
@@ -382,11 +378,12 @@ Bun.serve({
               return new Response(css, { headers: cssHeaders });
             }
           } catch (err) {
-            // Keep the page usable: surface the error in the terminal and
-            // as a CSS comment instead of a 500 that silently drops styles.
+            // 500 on purpose: the HMR client keeps the last working <link>
+            // on a failed fetch, so the page stays styled while you fix it.
             console.error(`⚠ Stylesheet error (${relativePath}):\n${String(err)}`);
-            return new Response(`/* static-kit: ${String(err)} */\n`, {
-              headers: cssHeaders,
+            return new Response(`Stylesheet error (${relativePath})\n\n${String(err)}\n`, {
+              status: 500,
+              headers: { "Content-Type": "text/plain", "Cache-Control": "no-store" },
             });
           }
         }

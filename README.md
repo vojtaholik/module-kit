@@ -433,7 +433,7 @@ How it works:
 - `.scss` and `.sass` (indented syntax) both work. `@use "pkg:some-package"` and bare `node_modules` imports resolve.
 - Sass output still goes through lightningcss, so prefixing and `cssOutput: "minified"` behave exactly like plain CSS.
 - Dev server compiles on request with an mtime-validated cache; editing any file in the `@use` graph hot-reloads.
-- A compile error shows in the terminal and as a comment at the top of the served CSS instead of a blank page.
+- A compile error is printed in the terminal and the request fails with 500, so hot reload keeps the last working stylesheet while you fix it.
 - `styles.css` **and** `styles.scss` side by side is an error — one output, one source.
 - `.scss` files present but `scss` left off? The CLI prints a hint and copies them verbatim, as before.
 

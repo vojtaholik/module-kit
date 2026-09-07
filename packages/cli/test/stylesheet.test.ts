@@ -85,6 +85,10 @@ describe("resolveStylesheet", () => {
   test("returns null for missing stylesheet", async () => {
     expect(await resolveStylesheet(publicDir, "css/nope.css", true)).toBeNull();
   });
+
+  test("partials never resolve (dev matches build)", async () => {
+    expect(await resolveStylesheet(publicDir, "css/_tokens.css", true)).toBeNull();
+  });
 });
 
 describe("compileStylesheet", () => {

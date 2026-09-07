@@ -19,7 +19,7 @@ import { dirname, join, basename } from "node:path";
 import { stat } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { Glob } from "bun";
-import { processCSSString } from "./css-processor.ts";
+import { processCSS, processCSSString } from "./css-processor.ts";
 
 /** Source extensions handled by the Sass compiler (syntax is picked per extension) */
 export const SASS_EXTENSIONS = [".scss", ".sass"] as const;
@@ -60,24 +60,38 @@ let sassModulePromise: Promise<SassModule> | null = null;
 /**
  * Load a Sass implementation. Prefers `sass-embedded` (native, faster),
  * falls back to `sass` (pure JS). Both expose the same modern API.
+ *
+ * Any failure to load a candidate (not installed, or installed but its
+ * platform binary is missing) moves on to the next one; the hint is thrown
+ * only when none loads, with the underlying errors attached.
  */
-export function loadSass(): Promise<SassModule> {
+export function loadSass(cwd = process.cwd()): Promise<SassModule> {
   if (!sassModulePromise) {
     sassModulePromise = (async () => {
+      const failures: string[] = [];
       for (const pkg of SASS_PACKAGES) {
         try {
-          const mod = (await import(pkg)) as SassModule & { default?: SassModule };
-          return typeof mod.compile === "function" ? mod : (mod.default as SassModule);
+          // Resolve from the user's project, not from wherever the CLI lives
+          let specifier: string = pkg;
+          try {
+            specifier = Bun.resolveSync(pkg, cwd);
+          } catch {
+            // not in the project tree — let import() try the CLI's own resolution
+          }
+          return (await import(specifier)) as SassModule;
         } catch (err) {
-          if (!isModuleNotFound(err, pkg)) throw err;
+          failures.push(`${pkg}: ${String((err as Error)?.message ?? err).split("\n")[0]}`);
         }
       }
       throw new Error(
         [
-          `scss: true is set but no Sass compiler is installed.`,
+          `scss: true is set but no Sass compiler could be loaded.`,
           `Install one of:`,
           `  bun add -d sass            # pure JS, zero native deps`,
           `  bun add -d sass-embedded   # native dart-sass, faster on big projects`,
+          ``,
+          `Tried:`,
+          ...failures.map((f) => `  - ${f}`),
         ].join("\n")
       );
     })().catch((err) => {
@@ -87,17 +101,6 @@ export function loadSass(): Promise<SassModule> {
     });
   }
   return sassModulePromise;
-}
-
-function isModuleNotFound(err: unknown, pkg: string): boolean {
-  const e = err as { code?: string; message?: string };
-  return (
-    e?.code === "ERR_MODULE_NOT_FOUND" ||
-    e?.code === "MODULE_NOT_FOUND" ||
-    (typeof e?.message === "string" &&
-      /cannot find (module|package)/i.test(e.message) &&
-      e.message.includes(pkg))
-  );
 }
 
 // ---------------------------------------------------------------------------
@@ -124,8 +127,8 @@ export interface SassCompileResult {
  * intentionally left to lightningcss so both pipelines stay identical.
  */
 export async function compileSass(options: CompileSassOptions): Promise<SassCompileResult> {
-  const sass = await loadSass();
   const cwd = options.cwd ?? process.cwd();
+  const sass = await loadSass(cwd);
 
   const importers: unknown[] = [];
   // `@use "pkg:some-package/styles"` — resolves via package.json exports
@@ -144,10 +147,10 @@ export async function compileSass(options: CompileSassOptions): Promise<SassComp
       importers,
       quietDeps: true,
     });
+    // loadedUrls always includes the entry point
     const loadedFiles = result.loadedUrls
       .filter((u) => u.protocol === "file:")
       .map((u) => fileURLToPath(u));
-    if (!loadedFiles.includes(options.file)) loadedFiles.unshift(options.file);
     return { css: result.css, loadedFiles };
   } catch (err) {
     // sass.Exception#toString() already carries the snippet + file:line;
@@ -173,6 +176,8 @@ export interface StylesheetSource {
  * - scss enabled: a real `.css` wins if it's alone; a `.scss`/`.sass`
  *   sibling is used otherwise. Having both is an error — it would be
  *   ambiguous which one ends up in dist.
+ * - Partials (`_foo.scss`) never resolve — they are inputs only, in dev
+ *   exactly like in build.
  */
 export async function resolveStylesheet(
   publicDir: string,
@@ -189,6 +194,7 @@ export async function resolveStylesheet(
   const sassCandidates: string[] = [];
   for (const ext of SASS_EXTENSIONS) {
     const candidate = cssPath.replace(/\.css$/, ext);
+    if (isSassPartial(candidate)) continue;
     if (await Bun.file(candidate).exists()) sassCandidates.push(candidate);
   }
 
@@ -227,8 +233,6 @@ export async function compileStylesheet(
   options: CompileStylesheetOptions
 ): Promise<CompiledStylesheet> {
   const { source } = options;
-  let raw: string;
-  let deps: string[];
 
   if (source.kind === "sass") {
     const result = await compileSass({
@@ -236,18 +240,17 @@ export async function compileStylesheet(
       publicDir: options.publicDir,
       cwd: options.cwd,
     });
-    raw = result.css;
-    deps = result.loadedFiles;
-  } else {
-    raw = await Bun.file(source.path).text();
-    deps = [source.path];
+    const css = processCSSString(result.css, {
+      filename: toCssPath(source.path),
+      minify: options.minify,
+    });
+    return { css, deps: result.loadedFiles };
   }
 
-  const css = processCSSString(raw, {
-    filename: source.kind === "sass" ? toCssPath(source.path) : source.path,
-    minify: options.minify,
-  });
-  return { css, deps };
+  // Plain CSS: hand lightningcss the raw bytes, exactly as before scss existed
+  const bytes = new Uint8Array(await Bun.file(source.path).arrayBuffer());
+  const result = processCSS({ filename: source.path, code: bytes, minify: options.minify });
+  return { css: new TextDecoder().decode(result.code), deps: [source.path] };
 }
 
 // ---------------------------------------------------------------------------
@@ -298,9 +301,15 @@ export async function compileStylesheetCached(
   const hit = compiledCache.get(key);
   if (hit && (await isFresh(hit))) return hit.css;
 
-  // Snapshot mtimes *before* compiling so a write during compile invalidates next time
+  // Deps are only known after compiling, so mtimes are snapshotted afterwards.
+  // A write that lands *during* the compile would then be recorded with its
+  // new mtime next to stale CSS — so refuse to cache when any dep was touched
+  // at or after the compile started; the next request recompiles.
+  const compileStart = Date.now();
   const { css, deps } = await compileStylesheet(options);
-  compiledCache.set(key, { css, mtimes: await snapshotMtimes(deps) });
+  const mtimes = await snapshotMtimes(deps);
+  const touchedDuringCompile = [...mtimes.values()].some((m) => m >= compileStart);
+  if (!touchedDuringCompile) compiledCache.set(key, { css, mtimes });
   return css;
 }
 

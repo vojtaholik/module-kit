@@ -111,50 +111,35 @@ async function build() {
   if (sassHint) console.warn(`  ℹ ${sassHint}`);
 
   const shouldMinify = config.cssOutput === "minified";
-  const emittedCss = new Set<string>();
 
   const publicGlob = new Glob("**/*");
   for await (const file of publicGlob.scan(publicDir)) {
     const srcFile = join(publicDir, file);
 
-    // Sass sources are inputs, not assets: partials vanish, entries emit .css
-    if (config.scss && isSassSource(file)) {
+    // Stylesheets: .css always, .scss/.sass when enabled. Partials are inputs
+    // only. resolveStylesheet owns the "which source produces this .css" rule
+    // and throws on a .css/.scss twin (ambiguous output).
+    if (file.endsWith(".css") || (config.scss && isSassSource(file))) {
       if (isSassPartial(file)) continue;
       const cssFile = toCssPath(file);
-      if (emittedCss.has(cssFile)) continue; // already produced by its .css/.scss twin
       const source = await resolveStylesheet(publicDir, cssFile, config.scss);
-      if (!source) continue;
+      if (!source) throw new Error(`Stylesheet vanished during build: ${srcFile}`);
       const { css } = await compileStylesheet({ source, publicDir, minify: shouldMinify, cwd });
       const destFile = join(outPublicDir, cssFile);
       await mkdir(dirname(destFile), { recursive: true });
       await Bun.write(destFile, css);
-      emittedCss.add(cssFile);
-      console.log(
-        `  ✓ ${config.publicPath}/${cssFile} (from ${file}${shouldMinify ? ", minified" : ""})`
-      );
+      const from = source.kind === "sass" ? `from ${file}` : "";
+      const note = [from, shouldMinify ? "minified" : ""].filter(Boolean).join(", ");
+      console.log(`  ✓ ${config.publicPath}/${cssFile}${note ? ` (${note})` : ""}`);
       continue;
     }
 
     const destFile = join(outPublicDir, file);
-
     const bunFile = Bun.file(srcFile);
     if (await bunFile.exists()) {
       await mkdir(dirname(destFile), { recursive: true });
-
-      // Process CSS files through lightningcss
-      if (file.endsWith(".css")) {
-        if (emittedCss.has(file)) continue;
-        // resolveStylesheet throws when a .scss twin also exists (ambiguous output)
-        const source = await resolveStylesheet(publicDir, file, config.scss);
-        if (!source) continue;
-        const { css } = await compileStylesheet({ source, publicDir, minify: shouldMinify, cwd });
-        await Bun.write(destFile, css);
-        emittedCss.add(file);
-        console.log(`  ✓ ${config.publicPath}/${file}${shouldMinify ? " (minified)" : ""}`);
-      } else {
-        await Bun.write(destFile, await bunFile.arrayBuffer());
-        console.log(`  ✓ ${config.publicPath}/${file}`);
-      }
+      await Bun.write(destFile, await bunFile.arrayBuffer());
+      console.log(`  ✓ ${config.publicPath}/${file}`);
     }
   }
 
