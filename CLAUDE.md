@@ -93,5 +93,6 @@ Blocks receive layout hints via `ctx.layout`: `tone` (surface/raised/accent/inve
 - **Block creation**: Always create both `.block.html` + `.block.ts`, register in `blocks/index.ts`, run `bun run gen`.
 - **Config**: `static-kit.config.ts` at root defines `blocksDir`, `pagesDir`, `publicDir`, `outDir`, `devPort`, `cmsBlocksFile`.
 - **CSS design system**: Tokens and layout primitives in `public/css/styles.css`. Tone modifiers: `.section--tone-{value}`.
+- **SCSS is opt-in, never default**: `scss: true` in config + user installs `sass`/`sass-embedded` (optional peer deps of the CLI). Pipeline lives in `packages/cli/src/stylesheet.ts`: `.scss` → Sass → lightningcss → same path with `.css`. Partials (`_*.scss`) are never emitted. Both dev and build go through `resolveStylesheet()` + `compileStylesheet()` — keep them the single source of truth for what a `.css` path maps to.
 - **Example site**: `example/` contains a reference site (JAP). Config paths point there: `example/blocks`, `example/site/pages`, `example/public`.
 - **Publishing**: `bun run publish-packages [patch|minor|major]` bumps all packages, runs checks, publishes to npm, tags git.

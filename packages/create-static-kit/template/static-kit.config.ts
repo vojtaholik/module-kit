@@ -7,4 +7,6 @@ export default defineConfig({
   outDir: "dist",
   publicPath: "/public",
   devPort: 3000,
+  // Optional: compile public/**/*.scss → .css (requires `bun add -d sass`)
+  // scss: true,
 });

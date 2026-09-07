@@ -24,7 +24,17 @@
     "lightningcss": "^1.28.2"
   },
   "peerDependencies": {
+    "sass": ">=1.71.0",
+    "sass-embedded": ">=1.71.0",
     "typescript": "^5"
+  },
+  "peerDependenciesMeta": {
+    "sass": {
+      "optional": true
+    },
+    "sass-embedded": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/js-beautify": "^1.14.3"

@@ -411,6 +411,32 @@ The CSS in `src/public/css/styles.css` provides:
 
 Customize tokens in `:root` to match your brand.
 
+## SCSS (optional)
+
+Plain CSS (with native nesting via lightningcss) is the default and needs nothing. If you want Sass, opt in:
+
+```ts
+// static-kit.config.ts
+export default defineConfig({
+  scss: true,
+});
+```
+
+```bash
+bun add -d sass   # or sass-embedded (native, faster on big projects)
+```
+
+How it works:
+
+- `public/css/styles.scss` → `dist/public/css/styles.css`. Same path, `.css` extension. Your `base.html` keeps linking `styles.css`, cache-busting keeps working.
+- Partials (`_tokens.scss`) are inputs only — never emitted, never copied to `dist/`.
+- `.scss` and `.sass` (indented syntax) both work. `@use "pkg:some-package"` and bare `node_modules` imports resolve.
+- Sass output still goes through lightningcss, so prefixing and `cssOutput: "minified"` behave exactly like plain CSS.
+- Dev server compiles on request with an mtime-validated cache; editing any file in the `@use` graph hot-reloads.
+- A compile error is printed in the terminal and the request fails with 500, so hot reload keeps the last working stylesheet while you fix it.
+- `styles.css` **and** `styles.scss` side by side is an error — one output, one source.
+- `.scss` files present but `scss` left off? The CLI prints a hint and copies them verbatim, as before.
+
 ## Dev Server Features
 
 - **Hot reload** - Changes to templates, CSS, and pages trigger instant refresh

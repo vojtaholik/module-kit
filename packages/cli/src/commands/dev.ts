@@ -19,7 +19,13 @@ import {
   type PageConfig,
 } from "@vojtaholik/static-kit-core";
 import { loadConfig, resolvePath } from "../config-loader.ts";
-import { processCSS } from "../css-processor.ts";
+import {
+  resolveStylesheet,
+  compileStylesheetCached,
+  invalidateStylesheetCache,
+  isSassSource,
+  sassHintIfDisabled,
+} from "../stylesheet.ts";
 import { compileSpritesheet } from "../sprite-compiler.ts";
 import { processHtmlOutput } from "../html-output.ts";
 
@@ -50,6 +56,12 @@ try {
     console.warn("   ⚠ Sprite compilation failed:", err);
   }
   // svg/ directory doesn't exist, skip silently
+}
+
+// Nudge when .scss files exist but scss is off
+{
+  const hint = await sassHintIfDisabled(publicDir, config.scss);
+  if (hint) console.warn(`ℹ ${hint}`);
 }
 
 // Hot-reloadable module loader
@@ -156,7 +168,10 @@ async function handleFileChange(filename: string, dir: string) {
     return;
   }
 
-  if (filename.endsWith(".css")) {
+  // Stylesheet source changed - drop compiled cache, hot-swap CSS.
+  // (.css always; .scss/.sass only when they are actually compiled)
+  if (filename.endsWith(".css") || (config.scss && isSassSource(filename))) {
+    invalidateStylesheetCache();
     broadcastReload("css");
     return;
   }
@@ -339,23 +354,47 @@ Bun.serve({
       if (path.startsWith(`${publicPath}/`)) {
         const relativePath = path.slice(publicPath.length + 1);
         const filePath = join(publicDir, relativePath);
-        const file = Bun.file(filePath);
-        if (await file.exists()) {
-          // Process CSS through lightningcss (no minification in dev)
-          if (filePath.endsWith(".css")) {
-            const cssBytes = new Uint8Array(await file.arrayBuffer());
-            const result = processCSS({
-              filename: filePath,
-              code: cssBytes,
-              minify: false,
-            });
-            return new Response(new TextDecoder().decode(result.code), {
-              headers: {
-                "Content-Type": "text/css",
-                "Cache-Control": "no-cache, no-store, must-revalidate",
-              },
+
+        // Stylesheets: plain .css or (opt-in) .scss/.sass compiled to the same
+        // .css path. Run through lightningcss, no minification in dev.
+        if (relativePath.endsWith(".css")) {
+          const cssHeaders = {
+            "Content-Type": "text/css",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+          };
+          try {
+            const source = await resolveStylesheet(
+              publicDir,
+              relativePath,
+              config.scss
+            );
+            if (source) {
+              const css = await compileStylesheetCached({
+                source,
+                publicDir,
+                minify: false,
+                cwd,
+              });
+              return new Response(css, { headers: cssHeaders });
+            }
+          } catch (err) {
+            // 500 on purpose: the HMR client keeps the last working <link>
+            // on a failed fetch, so the page stays styled while you fix it.
+            console.error(`⚠ Stylesheet error (${relativePath}):\n${String(err)}`);
+            return new Response(`Stylesheet error (${relativePath})\n\n${String(err)}\n`, {
+              status: 500,
+              headers: { "Content-Type": "text/plain", "Cache-Control": "no-store" },
             });
           }
+        }
+
+        // Sass sources are build inputs, never published — mirror that in dev
+        if (config.scss && isSassSource(relativePath)) {
+          return new Response("Not Found", { status: 404 });
+        }
+
+        const file = Bun.file(filePath);
+        if (await file.exists()) {
           return new Response(file, {
             headers: { "Cache-Control": "no-cache, no-store, must-revalidate" },
           });
