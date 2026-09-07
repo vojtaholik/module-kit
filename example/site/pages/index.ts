@@ -1,6 +1,6 @@
 import type { PageConfig } from "@vojtaholik/static-kit-core";
-import { indexPage } from "./index.page.ts";
 import { aboutPage } from "./about.page.ts";
+import { indexPage } from "./index.page.ts";
 
 // All pages in the site
 export const pages: PageConfig[] = [indexPage, aboutPage];

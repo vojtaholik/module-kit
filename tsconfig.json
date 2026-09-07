@@ -28,5 +28,5 @@
     "noPropertyAccessFromIndexSignature": false
   },
   "include": ["packages/**/*.ts", "example/**/*.ts", "static-kit.config.ts"],
-  "exclude": ["packages/create-static-kit/template/**"]
+  "exclude": ["packages/create-static-kit/template/**", "packages/cli/test/fixtures/**"]
 }

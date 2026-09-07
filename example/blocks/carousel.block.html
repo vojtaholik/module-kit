@@ -12,7 +12,7 @@
         data-carousel-prev
       >
         <svg class="icon" width="16" height="16" aria-hidden="true">
-          <use href="public/sprite.svg#arrow-left" />
+          <use :href="asset('sprite.svg') + '#arrow-left'" />
         </svg>
       </button>
       <button
@@ -22,7 +22,7 @@
         data-carousel-next
       >
         <svg class="icon" width="16" height="16" aria-hidden="true">
-          <use href="public/sprite.svg#arrow-right" />
+          <use :href="asset('sprite.svg') + '#arrow-right'" />
         </svg>
       </button>
     </div>

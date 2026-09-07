@@ -1,10 +1,11 @@
 // Auto-generated - DO NOT EDIT
-import { escapeHtml, escapeAttr, renderSlot, type RenderBlockInput } from "@vojtaholik/static-kit-core";
-import { encodeSchemaAddress } from "@vojtaholik/static-kit-core";
+import { escapeHtml, escapeAttr, renderSlot, assetUrl, type TypedRenderInput } from "@vojtaholik/static-kit-core";
+import { encodeSchemaAddress, registerBlockAssets, blockAssetMarker } from "@vojtaholik/static-kit-core";
+import type { TeaserProps } from "../teaser.block.ts";
 
-export function renderTeaser(input: RenderBlockInput): string {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { props, ctx, addr } = input as { props: any; ctx: typeof input.ctx; addr: typeof input.addr };
+export function renderTeaser(input: TypedRenderInput<TeaserProps>): string {
+  const { props, ctx, addr } = input;
+  const asset = (path: string) => assetUrl(ctx, path);
   let out = "";
   out += "<a";
   out += " class=\"card\"";

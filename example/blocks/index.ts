@@ -1,54 +1,55 @@
 // Block exports
-export { heroBlock, heroPropsSchema, type HeroProps } from "./hero.block.ts";
+
 export {
-  featureGridBlock,
-  featureGridPropsSchema,
-  type FeatureGridProps,
-} from "./feature-grid.block.ts";
-export {
-  latestPostsBlock,
-  latestPostsPropsSchema,
-  type LatestPostsProps,
-} from "./latest-posts.block.ts";
-export {
-  sectionHeaderBlock,
-  sectionHeaderPropsSchema,
-  type SectionHeaderProps,
-} from "./section-header.block.ts";
-export { gridBlock, gridPropsSchema, type GridProps } from "./grid.block.ts";
-export {
-  teaserBlock,
-  teaserPropsSchema,
-  type TeaserProps,
-} from "./teaser.block.ts";
-export {
-  businessCardBlock,
-  businessCardPropsSchema,
-  type BusinessCardProps,
-} from "./business-card.block.ts";
-export {
-  carouselBlock,
-  carouselPropsSchema,
-  type CarouselProps,
-  type CarouselItem,
-} from "./carousel.block.ts";
-export {
+  type BentoItem,
+  type BentoShowcaseProps,
   bentoShowcaseBlock,
   bentoShowcasePropsSchema,
-  type BentoShowcaseProps,
-  type BentoItem,
 } from "./bento-showcase.block.ts";
+export {
+  type BusinessCardProps,
+  businessCardBlock,
+  businessCardPropsSchema,
+} from "./business-card.block.ts";
+export {
+  type CarouselItem,
+  type CarouselProps,
+  carouselBlock,
+  carouselPropsSchema,
+} from "./carousel.block.ts";
+export {
+  type FeatureGridProps,
+  featureGridBlock,
+  featureGridPropsSchema,
+} from "./feature-grid.block.ts";
+export { type GridProps, gridBlock, gridPropsSchema } from "./grid.block.ts";
+export { type HeroProps, heroBlock, heroPropsSchema } from "./hero.block.ts";
+export {
+  type LatestPostsProps,
+  latestPostsBlock,
+  latestPostsPropsSchema,
+} from "./latest-posts.block.ts";
+export {
+  type SectionHeaderProps,
+  sectionHeaderBlock,
+  sectionHeaderPropsSchema,
+} from "./section-header.block.ts";
+export {
+  type TeaserProps,
+  teaserBlock,
+  teaserPropsSchema,
+} from "./teaser.block.ts";
 
-// Type-safe block props — augment BlockPropsMap so page configs get autocomplete
-import type { HeroProps } from "./hero.block.ts";
-import type { FeatureGridProps } from "./feature-grid.block.ts";
-import type { LatestPostsProps } from "./latest-posts.block.ts";
-import type { SectionHeaderProps } from "./section-header.block.ts";
-import type { GridProps } from "./grid.block.ts";
-import type { TeaserProps } from "./teaser.block.ts";
+import type { BentoShowcaseProps } from "./bento-showcase.block.ts";
 import type { BusinessCardProps } from "./business-card.block.ts";
 import type { CarouselProps } from "./carousel.block.ts";
-import type { BentoShowcaseProps } from "./bento-showcase.block.ts";
+import type { FeatureGridProps } from "./feature-grid.block.ts";
+import type { GridProps } from "./grid.block.ts";
+// Type-safe block props — augment BlockPropsMap so page configs get autocomplete
+import type { HeroProps } from "./hero.block.ts";
+import type { LatestPostsProps } from "./latest-posts.block.ts";
+import type { SectionHeaderProps } from "./section-header.block.ts";
+import type { TeaserProps } from "./teaser.block.ts";
 
 declare module "@vojtaholik/static-kit-core" {
   interface BlockPropsMap {
@@ -66,15 +67,15 @@ declare module "@vojtaholik/static-kit-core" {
 
 // Register all blocks
 import { blockRegistry } from "@vojtaholik/static-kit-core";
-import { heroBlock } from "./hero.block.ts";
-import { featureGridBlock } from "./feature-grid.block.ts";
-import { latestPostsBlock } from "./latest-posts.block.ts";
-import { sectionHeaderBlock } from "./section-header.block.ts";
-import { gridBlock } from "./grid.block.ts";
-import { teaserBlock } from "./teaser.block.ts";
+import { bentoShowcaseBlock } from "./bento-showcase.block.ts";
 import { businessCardBlock } from "./business-card.block.ts";
 import { carouselBlock } from "./carousel.block.ts";
-import { bentoShowcaseBlock } from "./bento-showcase.block.ts";
+import { featureGridBlock } from "./feature-grid.block.ts";
+import { gridBlock } from "./grid.block.ts";
+import { heroBlock } from "./hero.block.ts";
+import { latestPostsBlock } from "./latest-posts.block.ts";
+import { sectionHeaderBlock } from "./section-header.block.ts";
+import { teaserBlock } from "./teaser.block.ts";
 
 export function registerAllBlocks() {
   blockRegistry.register(heroBlock);

@@ -1,22 +1,27 @@
 // Auto-generated - DO NOT EDIT
-import { escapeHtml, escapeAttr, renderSlot, type RenderBlockInput } from "@vojtaholik/static-kit-core";
-import { encodeSchemaAddress } from "@vojtaholik/static-kit-core";
+import { escapeHtml, escapeAttr, renderSlot, assetUrl, type TypedRenderInput } from "@vojtaholik/static-kit-core";
+import { encodeSchemaAddress, registerBlockAssets, blockAssetMarker } from "@vojtaholik/static-kit-core";
+import type { BentoShowcaseProps } from "../bento-showcase.block.ts";
 
-export function renderBentoShowcase(input: RenderBlockInput): string {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { props, ctx, addr } = input as { props: any; ctx: typeof input.ctx; addr: typeof input.addr };
+export function renderBentoShowcase(input: TypedRenderInput<BentoShowcaseProps>): string {
+  const { props, ctx, addr } = input;
+  const asset = (path: string) => assetUrl(ctx, path);
   let out = "";
   out += "<section";
   out += " class=\"";
   out += "section section--tone-";
   out += escapeAttr(ctx.layout.tone);
   out += "\"";
-  out += " data-block-id=\"";
-  out += escapeAttr(addr.blockId);
-  out += "\"";
-  out += " data-schema-address=\"";
-  out += escapeAttr(encodeSchemaAddress(addr));
-  out += "\"";
+  if (ctx.isDev) {
+    out += " data-block-id=\"";
+    out += escapeAttr(addr.blockId);
+    out += "\"";
+    }
+  if (ctx.isDev) {
+    out += " data-schema-address=\"";
+    out += escapeAttr(encodeSchemaAddress(addr));
+    out += "\"";
+    }
   out += ">";
   out += "<div";
   out += " class=\"container container--wide\"";
@@ -78,14 +83,19 @@ export function renderBentoShowcase(input: RenderBlockInput): string {
   out += " height=\"12\"";
   out += ">";
   out += "<use";
-  out += " href=\"public/sprite.svg#arrow-right\"";
+  {
+    const _hrefVal: unknown = asset('sprite.svg') + '#arrow-right';
+    if (_hrefVal != null && _hrefVal !== false) {
+      out += " href=\"" + escapeAttr(_hrefVal) + "\"";
+    }
+  }
   out += ">";
   out += "</use>";
   out += "</svg>";
   out += "</span>";
   out += "</div>";
   out += "</a>";
-  for (const [_i, item] of (props.items).entries()) {
+  for (const [_i, item] of ((props.items) ?? []).entries()) {
     out += "<a";
     out += " class=\"bento-card\"";
     {
@@ -140,7 +150,12 @@ export function renderBentoShowcase(input: RenderBlockInput): string {
     out += " height=\"12\"";
     out += ">";
     out += "<use";
-    out += " href=\"public/sprite.svg#arrow-right\"";
+    {
+      const _hrefVal: unknown = asset('sprite.svg') + '#arrow-right';
+      if (_hrefVal != null && _hrefVal !== false) {
+        out += " href=\"" + escapeAttr(_hrefVal) + "\"";
+      }
+    }
     out += ">";
     out += "</use>";
     out += "</svg>";

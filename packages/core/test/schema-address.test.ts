@@ -1,10 +1,10 @@
-import { describe, test, expect } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import {
-  encodeSchemaAddress,
   decodeSchemaAddress,
-  withPropPath,
+  encodeSchemaAddress,
   isSameBlock,
   type SchemaAddress,
+  withPropPath,
 } from "../src/schema-address.ts";
 
 describe("Schema Address", () => {

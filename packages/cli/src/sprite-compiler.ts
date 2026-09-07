@@ -5,7 +5,7 @@
  * Each SVG becomes a <symbol> element with id matching the filename.
  */
 
-import { join, basename } from "node:path";
+import { basename, join } from "node:path";
 import { Glob } from "bun";
 
 export interface SpriteCompileOptions {

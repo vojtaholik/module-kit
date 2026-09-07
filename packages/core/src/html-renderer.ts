@@ -1,7 +1,8 @@
 import * as parse5 from "parse5";
+import { collectBlockAssets } from "./block-assets.ts";
+import { blockRegistry, type RenderContext } from "./block-registry.ts";
 import type { LayoutProps } from "./layout.ts";
 import { layoutPropsSchema } from "./layout.ts";
-import { blockRegistry, type RenderContext } from "./block-registry.ts";
 import type { SchemaAddress } from "./schema-address.ts";
 import { vlnaHtml } from "./vlna.ts";
 
@@ -15,7 +16,8 @@ import { vlnaHtml } from "./vlna.ts";
  *     }
  *   }
  */
-export interface BlockPropsMap { }
+// biome-ignore lint/suspicious/noEmptyInterface: augmented via `declare module` by user projects
+export interface BlockPropsMap {}
 
 type TypedBlockInstance = {
   [K in keyof BlockPropsMap & string]: {
@@ -59,6 +61,11 @@ export interface PageConfig {
   template: string;
   density?: "compact" | "comfortable" | "relaxed";
   regions: Record<string, RegionConfig>;
+  /**
+   * Extra `<meta>` tags. Keys starting with `og:` / `twitter:` / `fb:` become
+   * `property="..."`, everything else `name="..."`. A tag already present in
+   * the template with the same name/property gets its content replaced.
+   */
   meta?: Record<string, string>;
 }
 
@@ -70,6 +77,7 @@ interface Element {
   value?: string;
   data?: string;
   parentNode?: Node;
+  namespaceURI?: string;
 }
 
 type Node = Element;
@@ -82,7 +90,7 @@ export interface RenderPageOptions {
   templateDir: string;
   /** Whether we're in dev mode (injects dev overlay) */
   isDev?: boolean;
-  /** Base URL for assets */
+  /** Base URL for assets (exposed to templates as `asset()` / `ctx.assetBase`) */
   assetBase?: string;
   /** Function to read template file content */
   readFile?: (path: string) => Promise<string>;
@@ -94,6 +102,11 @@ export interface RenderPageOptions {
    * Czech or Slovak; `true`/`false` force it on or off.
    */
   vlna?: boolean | "auto";
+  /**
+   * Throw on an unknown block type or invalid props instead of logging a
+   * warning and skipping the block. Production builds should set this.
+   */
+  strict?: boolean;
 }
 
 /** Languages whose typography rules vlna implements */
@@ -109,15 +122,13 @@ function shouldApplyVlna(setting: boolean | "auto", lang: string | undefined): b
 /**
  * Render a page from its config
  */
-export async function renderPage(
-  page: PageConfig,
-  options: RenderPageOptions
-): Promise<string> {
+export async function renderPage(page: PageConfig, options: RenderPageOptions): Promise<string> {
   const templatePath = `${options.templateDir}/${page.template}`;
 
+  assertUniqueBlockIds(page);
+
   // Use provided readFile or default to Bun.file
-  const readFile =
-    options.readFile ?? (async (path: string) => await Bun.file(path).text());
+  const readFile = options.readFile ?? (async (path: string) => await Bun.file(path).text());
   const templateHtml = await readFile(templatePath);
 
   // Parse the template
@@ -126,12 +137,17 @@ export async function renderPage(
   // Track regions and their rendered content
   const regionContent: Record<string, string> = {};
   let htmlLang: string | undefined;
+  let head: Element | undefined;
 
   // Find and update elements
   walkTree(document, (node) => {
     // Update <title> (works for an empty <title></title> too)
     if (node.nodeName === "title") {
       node.childNodes = [{ nodeName: "#text", value: page.title, parentNode: node } as Node];
+    }
+
+    if (node.nodeName === "head") {
+      head = node;
     }
 
     if (node.nodeName === "html") {
@@ -142,7 +158,7 @@ export async function renderPage(
       }
     }
 
-    if (node.nodeName === 'main' && page.density) {
+    if (node.nodeName === "main" && page.density) {
       setAttr(node, "data-density", page.density);
     }
 
@@ -157,7 +173,7 @@ export async function renderPage(
       }
       if (node.nodeName === "script") {
         const src = getAttr(node, "src");
-        if (src && src.endsWith(".js") && !src.includes("?v=")) {
+        if (src?.endsWith(".js") && !src.includes("?v=")) {
           setAttr(node, "src", `${src}?v=${options.cacheBust}`);
         }
       }
@@ -174,6 +190,7 @@ export async function renderPage(
           region: regionName,
           isDev: options.isDev ?? false,
           assetBase: options.assetBase ?? "/",
+          strict: options.strict ?? false,
         });
 
         // Insert a marker that won't get escaped
@@ -192,10 +209,12 @@ export async function renderPage(
     }
   });
 
+  if (page.meta && head) {
+    applyMeta(head, page.meta);
+  }
+
   // Serialize to HTML
-  let html = parse5.serialize(
-    document as unknown as parse5.DefaultTreeAdapterMap["parentNode"]
-  );
+  let html = parse5.serialize(document as unknown as parse5.DefaultTreeAdapterMap["parentNode"]);
 
   // Replace markers with actual region content
   // Uses split/join instead of replace() to avoid issues with $ in content
@@ -203,6 +222,16 @@ export async function renderPage(
   for (const [regionName, content] of Object.entries(regionContent)) {
     const marker = `<!--__REGION_CONTENT_${regionName}__-->`;
     html = html.split(marker).join(content);
+  }
+
+  // Block-level <style>/<script>: once per page, in first-seen order
+  const assets = collectBlockAssets(html);
+  html = assets.html;
+  if (assets.styles.length) {
+    html = injectBefore(html, "</head>", assets.styles.join("\n"));
+  }
+  if (assets.scripts.length) {
+    html = injectBefore(html, "</body>", assets.scripts.join("\n"));
   }
 
   // Czech typography: non-breaking spaces after single-char prepositions
@@ -221,62 +250,121 @@ export async function renderPage(
 }
 
 /**
+ * Two blocks with the same id on one page would share a schema address,
+ * so the inspector (and any CMS) could not tell them apart.
+ */
+function assertUniqueBlockIds(page: PageConfig): void {
+  const seen = new Map<string, string>();
+  for (const [region, config] of Object.entries(page.regions)) {
+    for (const block of config.blocks) {
+      const prev = seen.get(block.id);
+      if (prev) {
+        throw new Error(
+          `Duplicate block id "${block.id}" on page "${page.id}" (regions "${prev}" and "${region}")`
+        );
+      }
+      seen.set(block.id, region);
+    }
+  }
+}
+
+const PROPERTY_META_PREFIXES = ["og:", "twitter:", "fb:", "article:"];
+
+/**
+ * Add or update <meta> tags in <head> from page.meta
+ */
+function applyMeta(head: Element, meta: Record<string, string>): void {
+  head.childNodes ??= [];
+  for (const [key, content] of Object.entries(meta)) {
+    const keyAttr = PROPERTY_META_PREFIXES.some((p) => key.startsWith(p)) ? "property" : "name";
+    const existing = head.childNodes.find(
+      (n) => n.nodeName === "meta" && getAttr(n, keyAttr) === key
+    );
+    if (existing) {
+      setAttr(existing, "content", content);
+      continue;
+    }
+    head.childNodes.push({
+      nodeName: "meta",
+      tagName: "meta",
+      namespaceURI: "http://www.w3.org/1999/xhtml",
+      attrs: [
+        { name: keyAttr, value: key },
+        { name: "content", value: content },
+      ],
+      childNodes: [],
+      parentNode: head,
+    } as Node);
+  }
+}
+
+interface BlockRenderContext {
+  pageId: string;
+  region: string;
+  isDev: boolean;
+  assetBase: string;
+  /** Throw instead of warn on unknown type / invalid props */
+  strict: boolean;
+}
+
+/**
+ * Validate and render one block instance. Returns "" (after warning) for an
+ * unknown type or invalid props unless `strict` is set, in which case it throws.
+ */
+function renderBlockInstance(block: BlockInstance, context: BlockRenderContext): string {
+  const definition = blockRegistry.get(block.type);
+  if (!definition) {
+    const msg = `Unknown block type "${block.type}" (block "${block.id}" on page "${context.pageId}")`;
+    if (context.strict) throw new Error(msg);
+    console.warn(msg);
+    return "";
+  }
+
+  // Validate and parse props
+  const propsResult = definition.propsSchema.safeParse(block.props);
+  if (!propsResult.success) {
+    const issues = propsResult.error.issues
+      .map((i) => `${i.path.join(".")}: ${i.message}`)
+      .join("; ");
+    const msg = `Invalid props for block "${block.id}" (${block.type}) on page "${context.pageId}": ${issues}`;
+    if (context.strict) throw new Error(msg);
+    console.warn(msg);
+    return "";
+  }
+
+  // Build layout props
+  const layout = layoutPropsSchema.parse(block.layout ?? {});
+
+  // Build render context
+  const ctx: RenderContext = {
+    pageId: context.pageId,
+    assetBase: context.assetBase,
+    isDev: context.isDev,
+    layout,
+  };
+
+  // Build schema address
+  const addr: SchemaAddress = {
+    pageId: context.pageId,
+    region: context.region,
+    blockId: block.id,
+  };
+
+  return definition.renderHtml({
+    props: propsResult.data,
+    ctx,
+    addr,
+  });
+}
+
+/**
  * Render all blocks in a region
  */
-function renderRegionBlocks(
-  region: RegionConfig,
-  context: {
-    pageId: string;
-    region: string;
-    isDev: boolean;
-    assetBase: string;
-  }
-): string {
+function renderRegionBlocks(region: RegionConfig, context: BlockRenderContext): string {
   let html = "";
-
   for (const block of region.blocks) {
-    const definition = blockRegistry.get(block.type);
-    if (!definition) {
-      console.warn(`Unknown block type: ${block.type}`);
-      continue;
-    }
-
-    // Validate and parse props
-    const propsResult = definition.propsSchema.safeParse(block.props);
-    if (!propsResult.success) {
-      const issues = propsResult.error.issues
-        .map((i) => `${i.path.join(".")}: ${i.message}`)
-        .join("; ");
-      console.warn(`Invalid props for block ${block.id}: ${issues}`);
-      continue;
-    }
-
-    // Build layout props
-    const layout = layoutPropsSchema.parse(block.layout ?? {});
-
-    // Build render context
-    const ctx: RenderContext = {
-      pageId: context.pageId,
-      assetBase: context.assetBase,
-      isDev: context.isDev,
-      layout,
-    };
-
-    // Build schema address
-    const addr: SchemaAddress = {
-      pageId: context.pageId,
-      region: context.region,
-      blockId: block.id,
-    };
-
-    // Render the block
-    html += definition.renderHtml({
-      props: propsResult.data,
-      ctx,
-      addr,
-    });
+    html += renderBlockInstance(block, context);
   }
-
   return html;
 }
 
@@ -324,8 +412,17 @@ function removeAttr(node: Node, name: string): void {
   }
 }
 
+/** Insert `content` before the first occurrence of `marker` (or append) */
+function injectBefore(html: string, marker: string, content: string): string {
+  const idx = html.indexOf(marker);
+  if (idx === -1) return html + content;
+  return html.slice(0, idx) + content + html.slice(idx);
+}
+
 /**
- * Strip dev-only attributes (data-block-id, data-schema-address) from production HTML
+ * Strip dev-only attributes (data-block-id, data-schema-address) from production HTML.
+ * Generated templates already omit them outside dev; this covers hand-written
+ * renderHtml functions.
  */
 function stripDevAttributes(html: string): string {
   return html
@@ -337,12 +434,12 @@ function stripDevAttributes(html: string): string {
  * Inject dev overlay script
  */
 function injectDevOverlay(html: string): string {
-  const script = `<script src="/__dev-overlay.js"></script>`;
-  return html.replace("</body>", `${script}</body>`);
+  return injectBefore(html, "</body>", `<script src="/__dev-overlay.js"></script>`);
 }
 
 /**
- * Render a standalone block (for API/preview)
+ * Render a standalone block (for API/preview). Always strict: throws on an
+ * unknown type or invalid props. Block asset markers are stripped.
  */
 export function renderBlock(
   block: BlockInstance,
@@ -353,31 +450,6 @@ export function renderBlock(
     assetBase: string;
   }
 ): string {
-  const definition = blockRegistry.getOrThrow(block.type);
-
-  const propsResult = definition.propsSchema.safeParse(block.props);
-  if (!propsResult.success) {
-    throw new Error(`Invalid props: ${propsResult.error.message}`);
-  }
-
-  const layout = layoutPropsSchema.parse(block.layout ?? {});
-
-  const ctx: RenderContext = {
-    pageId: context.pageId,
-    assetBase: context.assetBase,
-    isDev: context.isDev,
-    layout,
-  };
-
-  const addr: SchemaAddress = {
-    pageId: context.pageId,
-    region: context.region,
-    blockId: block.id,
-  };
-
-  return definition.renderHtml({
-    props: propsResult.data,
-    ctx,
-    addr,
-  });
+  const html = renderBlockInstance(block, { ...context, strict: true });
+  return collectBlockAssets(html).html;
 }

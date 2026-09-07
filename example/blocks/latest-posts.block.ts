@@ -1,5 +1,5 @@
-import { z } from "zod/v4";
 import { defineBlock } from "@vojtaholik/static-kit-core";
+import { z } from "zod/v4";
 import { renderLatestPosts } from "./gen/latest-posts.render.ts";
 
 export const latestPostsPropsSchema = z.object({

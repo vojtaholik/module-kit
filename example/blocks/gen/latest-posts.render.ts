@@ -1,22 +1,27 @@
 // Auto-generated - DO NOT EDIT
-import { escapeHtml, escapeAttr, renderSlot, type RenderBlockInput } from "@vojtaholik/static-kit-core";
-import { encodeSchemaAddress } from "@vojtaholik/static-kit-core";
+import { escapeHtml, escapeAttr, renderSlot, assetUrl, type TypedRenderInput } from "@vojtaholik/static-kit-core";
+import { encodeSchemaAddress, registerBlockAssets, blockAssetMarker } from "@vojtaholik/static-kit-core";
+import type { LatestPostsProps } from "../latest-posts.block.ts";
 
-export function renderLatestPosts(input: RenderBlockInput): string {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { props, ctx, addr } = input as { props: any; ctx: typeof input.ctx; addr: typeof input.addr };
+export function renderLatestPosts(input: TypedRenderInput<LatestPostsProps>): string {
+  const { props, ctx, addr } = input;
+  const asset = (path: string) => assetUrl(ctx, path);
   let out = "";
   out += "<section";
   out += " class=\"";
   out += "section section--latest-posts section--tone-";
   out += escapeAttr(ctx.layout.tone);
   out += "\"";
-  out += " data-block-id=\"";
-  out += escapeAttr(addr.blockId);
-  out += "\"";
-  out += " data-schema-address=\"";
-  out += escapeAttr(encodeSchemaAddress(addr));
-  out += "\"";
+  if (ctx.isDev) {
+    out += " data-block-id=\"";
+    out += escapeAttr(addr.blockId);
+    out += "\"";
+    }
+  if (ctx.isDev) {
+    out += " data-schema-address=\"";
+    out += escapeAttr(encodeSchemaAddress(addr));
+    out += "\"";
+    }
   out += ">";
   out += "<div";
   out += " class=\"";
@@ -48,7 +53,7 @@ export function renderLatestPosts(input: RenderBlockInput): string {
   out += "<div";
   out += " class=\"grid grid--3\"";
   out += ">";
-  for (const [i, post] of (props.posts).entries()) {
+  for (const [i, post] of ((props.posts) ?? []).entries()) {
     out += "<article";
     out += " class=\"card card--post\"";
     out += ">";

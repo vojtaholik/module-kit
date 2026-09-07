@@ -15,8 +15,8 @@
  * - Partials (`_foo.scss`) are never emitted; sources are never copied to dist.
  */
 
-import { dirname, join, basename } from "node:path";
 import { stat } from "node:fs/promises";
+import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Glob } from "bun";
 import { processCSS, processCSSString } from "./css-processor.ts";
@@ -291,9 +291,7 @@ async function isFresh(entry: CacheEntry): Promise<boolean> {
 }
 
 /** Cached variant of compileStylesheet for the dev server (Sass compile isn't free). */
-export async function compileStylesheetCached(
-  options: CompileStylesheetOptions
-): Promise<string> {
+export async function compileStylesheetCached(options: CompileStylesheetOptions): Promise<string> {
   // Plain CSS is cheap; only cache Sass output
   if (options.source.kind !== "sass") return (await compileStylesheet(options)).css;
 
@@ -326,10 +324,7 @@ export function invalidateStylesheetCache(): void {
  * disabled (they'd be copied verbatim / served raw).
  * Returns null when there's nothing to say.
  */
-export async function sassHintIfDisabled(
-  publicDir: string,
-  scss: boolean
-): Promise<string | null> {
+export async function sassHintIfDisabled(publicDir: string, scss: boolean): Promise<string | null> {
   if (scss) return null;
 
   const glob = new Glob("**/*.{scss,sass}");

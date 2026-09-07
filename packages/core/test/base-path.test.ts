@@ -1,4 +1,4 @@
-import { describe, test, expect } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import { rewriteBasePath } from "../src/base-path.ts";
 
 describe("rewriteBasePath", () => {
@@ -48,8 +48,7 @@ describe("rewriteBasePath", () => {
   });
 
   test("handles multiple links", () => {
-    const html =
-      '<a href="/">Home</a><a href="/about">A</a><a href="https://x.com">X</a>';
+    const html = '<a href="/">Home</a><a href="/about">A</a><a href="https://x.com">X</a>';
     const result = rewriteBasePath(html, "/base");
     expect(result).toBe(
       '<a href="/base/">Home</a><a href="/base/about">A</a><a href="https://x.com">X</a>'
@@ -58,15 +57,42 @@ describe("rewriteBasePath", () => {
 
   test("handles deep paths", () => {
     const html = '<a href="/reference/projekt-chlum">Ref</a>';
-    expect(rewriteBasePath(html, "/tech")).toBe(
-      '<a href="/tech/reference/projekt-chlum">Ref</a>'
-    );
+    expect(rewriteBasePath(html, "/tech")).toBe('<a href="/tech/reference/projekt-chlum">Ref</a>');
   });
 
   test("works on non-anchor elements with href", () => {
     const html = '<link rel="canonical" href="/about" />';
-    expect(rewriteBasePath(html, "/app")).toBe(
-      '<link rel="canonical" href="/app/about" />'
+    expect(rewriteBasePath(html, "/app")).toBe('<link rel="canonical" href="/app/about" />');
+  });
+});
+
+describe("rewriteBasePath: src / srcset / poster / action", () => {
+  test("rewrites src and poster", () => {
+    const html =
+      '<img src="/public/a.jpg"><video poster="/public/p.jpg" src="/public/v.mp4"></video>';
+    expect(rewriteBasePath(html, "/sub")).toBe(
+      '<img src="/sub/public/a.jpg"><video poster="/sub/public/p.jpg" src="/sub/public/v.mp4"></video>'
     );
+  });
+
+  test("rewrites form action", () => {
+    expect(rewriteBasePath('<form action="/send">', "/sub")).toBe('<form action="/sub/send">');
+  });
+
+  test("rewrites every srcset candidate", () => {
+    const html = '<img srcset="/public/a.jpg 1x, /public/b.jpg 2x, https://cdn/x.jpg 3x">';
+    expect(rewriteBasePath(html, "/sub")).toBe(
+      '<img srcset="/sub/public/a.jpg 1x, /sub/public/b.jpg 2x, https://cdn/x.jpg 3x">'
+    );
+  });
+
+  test("leaves protocol-relative and already-prefixed URLs alone", () => {
+    const html = '<script src="//cdn.example/x.js"></script><img src="/sub/public/a.jpg">';
+    expect(rewriteBasePath(html, "/sub")).toBe(html);
+  });
+
+  test("does not touch data-src or relative paths", () => {
+    const html = '<img data-src="/lazy.jpg" src="public/a.jpg">';
+    expect(rewriteBasePath(html, "/sub")).toBe(html);
   });
 });

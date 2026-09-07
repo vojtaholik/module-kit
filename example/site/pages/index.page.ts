@@ -371,8 +371,7 @@ export const indexPage: PageConfig = {
             contactPerson: {
               name: "Aleš Vyskočil",
               title: "Obchodně-technický poradce",
-              regions:
-                "Moravskoslezský kraj, Olomoucký kraj, Zlínský kraj (Vsetín)",
+              regions: "Moravskoslezský kraj, Olomoucký kraj, Zlínský kraj (Vsetín)",
               image: {
                 src: "public/images/ales-vyskocil.jpg",
                 alt: "Aleš Vyskočil",
@@ -396,7 +395,7 @@ export const indexPage: PageConfig = {
           },
         },
         {
-          id: "cta-1",
+          id: "cta-2",
           type: "sectionHeader",
           props: {
             headline: "Vlastnosti dané kategorie",

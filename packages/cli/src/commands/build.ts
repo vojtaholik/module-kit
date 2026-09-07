@@ -10,26 +10,27 @@
  * 5. Write HTML files to dist/ (flat structure)
  */
 
-import { mkdir, rm, cp } from "node:fs/promises";
-import { join, dirname } from "node:path";
-import { Glob } from "bun";
+import { mkdir, rm } from "node:fs/promises";
+import { dirname, join } from "node:path";
 import {
-  renderPage,
   compileBlockTemplates,
-  rewriteBasePath,
   type PageConfig,
+  renderPage,
+  rewriteBasePath,
 } from "@vojtaholik/static-kit-core";
+import { Glob } from "bun";
 import { loadConfig, resolvePath } from "../config-loader.ts";
-import {
-  resolveStylesheet,
-  compileStylesheet,
-  isSassSource,
-  isSassPartial,
-  toCssPath,
-  sassHintIfDisabled,
-} from "../stylesheet.ts";
-import { compileSpritesheet } from "../sprite-compiler.ts";
 import { processHtmlOutput } from "../html-output.ts";
+import { pageOutputFile } from "../paths.ts";
+import { compileSpritesheet } from "../sprite-compiler.ts";
+import {
+  compileStylesheet,
+  isSassPartial,
+  isSassSource,
+  resolveStylesheet,
+  sassHintIfDisabled,
+  toCssPath,
+} from "../stylesheet.ts";
 
 const cwd = process.cwd();
 const config = await loadConfig(cwd);
@@ -55,6 +56,7 @@ async function build() {
   await compileBlockTemplates({
     blocksDir,
     genDir: join(blocksDir, "gen"),
+    typed: config.typedTemplates,
   });
 
   // Step 1.5: Compile SVG spritesheet
@@ -87,17 +89,17 @@ async function build() {
     let html = await renderPage(page, {
       templateDir: pagesDir,
       isDev: false,
-      assetBase: "/",
+      assetBase: config.publicPath,
       cacheBust: buildTimestamp,
       vlna: config.vlna,
+      // A missing block or invalid props must fail the build, not silently
+      // drop a section from the page
+      strict: true,
     });
     html = rewriteBasePath(html, config.basePath);
     html = await processHtmlOutput(html, config.htmlOutput);
 
-    // Flat output: /about -> dist/about.html, / -> dist/index.html
-    const fileName =
-      page.path === "/" ? "index.html" : `${page.path.replace(/^\//, "")}.html`;
-    const outPath = join(outDir, fileName);
+    const outPath = join(outDir, pageOutputFile(page.path, config.trailingSlash));
 
     // Write HTML
     await Bun.write(outPath, html);

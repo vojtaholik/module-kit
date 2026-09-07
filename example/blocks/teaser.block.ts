@@ -1,5 +1,5 @@
-import { z } from "zod/v4";
 import { defineBlock } from "@vojtaholik/static-kit-core";
+import { z } from "zod/v4";
 import { renderTeaser } from "./gen/teaser.render.ts";
 
 export const teaserPropsSchema = z.object({

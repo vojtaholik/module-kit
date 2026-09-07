@@ -35,9 +35,7 @@ const SHORT_PREP_RE =
  * Plain text only — no HTML awareness.
  */
 export function vlna(text: string): string {
-  return text
-    .replace(SINGLE_CHAR_RE, "$1\u00A0")
-    .replace(SHORT_PREP_RE, "$1\u00A0");
+  return text.replace(SINGLE_CHAR_RE, "$1\u00A0").replace(SHORT_PREP_RE, "$1\u00A0");
 }
 
 /**
