@@ -42,19 +42,37 @@ jobs:
           "
 
       - name: Publish @vojtaholik/static-kit-core
-        run: npm publish --access public --provenance
         working-directory: packages/core
+        run: |
+          v=$(node -p "require('./package.json').version")
+          if npm view "@vojtaholik/static-kit-core@$v" version >/dev/null 2>&1; then
+            echo "@vojtaholik/static-kit-core@$v already published, skipping"
+            exit 0
+          fi
+          npm publish --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish @vojtaholik/static-kit-cli
-        run: npm publish --access public --provenance
         working-directory: packages/cli
+        run: |
+          v=$(node -p "require('./package.json').version")
+          if npm view "@vojtaholik/static-kit-cli@$v" version >/dev/null 2>&1; then
+            echo "@vojtaholik/static-kit-cli@$v already published, skipping"
+            exit 0
+          fi
+          npm publish --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish @vojtaholik/create-static-kit
-        run: npm publish --access public --provenance
         working-directory: packages/create-static-kit
+        run: |
+          v=$(node -p "require('./package.json').version")
+          if npm view "@vojtaholik/create-static-kit@$v" version >/dev/null 2>&1; then
+            echo "@vojtaholik/create-static-kit@$v already published, skipping"
+            exit 0
+          fi
+          npm publish --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
