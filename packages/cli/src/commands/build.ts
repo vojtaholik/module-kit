@@ -5,7 +5,8 @@
  * 1. Run template compiler (gen-blocks)
  * 2. Load and validate all page configs
  * 3. Render each page to HTML (no dev overlay)
- * 4. Copy publicDir to dist/{publicPath}/ (1:1 structure)
+ * 4. Copy publicDir to dist/{publicPath}/ (1:1 structure);
+ *    CSS goes through lightningcss, .scss/.sass → .css when cssPreprocessor is "scss"
  * 5. Write HTML files to dist/ (flat structure)
  */
 
@@ -19,7 +20,14 @@ import {
   type PageConfig,
 } from "@vojtaholik/static-kit-core";
 import { loadConfig, resolvePath } from "../config-loader.ts";
-import { processCSS } from "../css-processor.ts";
+import {
+  resolveStylesheet,
+  compileStylesheet,
+  isSassSource,
+  isSassPartial,
+  toCssPath,
+  sassHintIfDisabled,
+} from "../stylesheet.ts";
 import { compileSpritesheet } from "../sprite-compiler.ts";
 import { processHtmlOutput } from "../html-output.ts";
 
@@ -99,9 +107,35 @@ async function build() {
   console.log("\n📦 Copying public assets...");
   const outPublicDir = join(outDir, publicPathDir);
 
+  const sassEnabled = config.cssPreprocessor !== "none";
+  const sassHint = await sassHintIfDisabled(publicDir, config.cssPreprocessor);
+  if (sassHint) console.warn(`  ℹ ${sassHint}`);
+
+  const shouldMinify = config.cssOutput === "minified";
+  const emittedCss = new Set<string>();
+
   const publicGlob = new Glob("**/*");
   for await (const file of publicGlob.scan(publicDir)) {
     const srcFile = join(publicDir, file);
+
+    // Sass sources are inputs, not assets: partials vanish, entries emit .css
+    if (sassEnabled && isSassSource(file)) {
+      if (isSassPartial(file)) continue;
+      const cssFile = toCssPath(file);
+      if (emittedCss.has(cssFile)) continue; // already produced by its .css/.scss twin
+      const source = await resolveStylesheet(publicDir, cssFile, config.cssPreprocessor);
+      if (!source) continue;
+      const { css } = await compileStylesheet({ source, publicDir, minify: shouldMinify, cwd });
+      const destFile = join(outPublicDir, cssFile);
+      await mkdir(dirname(destFile), { recursive: true });
+      await Bun.write(destFile, css);
+      emittedCss.add(cssFile);
+      console.log(
+        `  ✓ ${config.publicPath}/${cssFile} (from ${file}${shouldMinify ? ", minified" : ""})`
+      );
+      continue;
+    }
+
     const destFile = join(outPublicDir, file);
 
     const bunFile = Bun.file(srcFile);
@@ -110,14 +144,13 @@ async function build() {
 
       // Process CSS files through lightningcss
       if (file.endsWith(".css")) {
-        const cssBytes = new Uint8Array(await bunFile.arrayBuffer());
-        const shouldMinify = config.cssOutput === "minified";
-        const result = processCSS({
-          filename: srcFile,
-          code: cssBytes,
-          minify: shouldMinify,
-        });
-        await Bun.write(destFile, result.code);
+        if (emittedCss.has(file)) continue;
+        // resolveStylesheet throws when a .scss twin also exists (ambiguous output)
+        const source = await resolveStylesheet(publicDir, file, config.cssPreprocessor);
+        if (!source) continue;
+        const { css } = await compileStylesheet({ source, publicDir, minify: shouldMinify, cwd });
+        await Bun.write(destFile, css);
+        emittedCss.add(file);
         console.log(`  ✓ ${config.publicPath}/${file}${shouldMinify ? " (minified)" : ""}`);
       } else {
         await Bun.write(destFile, await bunFile.arrayBuffer());
