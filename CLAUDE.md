@@ -23,9 +23,12 @@ bun run build            # production build → dist/
 bun run gen              # compile *.block.html → gen/*.render.ts
 bun run sprite           # compile example/public/svg/*.svg → sprite.svg
 bun run typecheck        # tsc --noEmit
+bun run lint             # biome check (format + lint)
+bun run format           # biome check --write
 bun test                 # run all tests
 bun test packages/core/test/template-compiler.test.ts  # single test
-bun run publish-packages # bump version + publish to npm
+bun run check            # lint + typecheck + test
+bun run release [patch|minor|major]  # bump versions, tag, push; CI publishes
 ```
 
 ## Creating a new project
@@ -89,10 +92,15 @@ Blocks receive layout hints via `ctx.layout`: `tone` (surface/raised/accent/inve
 - **Zod v4**: Import as `import { z } from "zod/v4"` (not `"zod"`).
 - **Imports**: `import { defineConfig } from "@vojtaholik/static-kit-core"` (not the old `@static-block-kit/core`).
 - **Generated files**: `blocks/gen/` is auto-generated. Never edit. Run `bun run gen` after changing `*.block.html`.
-- **Template DSL**: `{{ expr }}` escaped, `{{{ expr }}}` raw, `v-if`/`v-for` directives, `:attr` dynamic bindings. No `v-else`. Use `<template>` as invisible wrapper. `<render-slot>` for block delegation.
+- **Template DSL**: `{{ expr }}` escaped, `{{{ expr }}}` raw, `v-if`/`v-else-if`/`v-else`/`v-for` directives, `:attr` dynamic bindings (omitted only for `null`/`undefined`/`false`; `class` + `:class` merge). Use `<template>` as invisible wrapper. `<render-slot>` for block delegation. `asset("images/x.jpg")` for public asset URLs. Top-level `<style>`/`<script>` in a template are hoisted and injected once per page.
+- **Typed templates**: export `<Name>Props` from `<name>.block.ts` and the generated render fn types `props` against it — template typos are tsc errors. Opt out with `typedTemplates: false`.
+- **Dev-only attrs**: `data-block-id` / `data-schema-address` are compiled under `if (ctx.isDev)`; never rely on them in production CSS/JS.
 - **Block creation**: Always create both `.block.html` + `.block.ts`, register in `blocks/index.ts`, run `bun run gen`.
-- **Config**: `static-kit.config.ts` at root defines `blocksDir`, `pagesDir`, `publicDir`, `outDir`, `devPort`, `cmsBlocksFile`.
+- **Config**: `static-kit.config.ts` at root: `blocksDir`, `pagesDir`, `publicDir`, `outDir`, `publicPath`, `devPort`, `basePath`, `trailingSlash`, `htmlOutput`, `cssOutput`, `scss`, `typedTemplates`, `vlna`. Schema in `packages/core/src/config.ts`.
+- **Build is strict**: unknown block type, invalid props, or duplicate block ids on a page fail `build`. Dev warns and skips the block.
+- **Czech typography (vlna)**: runs only when `<html lang>` is `cs`/`sk` (or `vlna: true`). Don't add non-breaking spaces by hand.
 - **CSS design system**: Tokens and layout primitives in `public/css/styles.css`. Tone modifiers: `.section--tone-{value}`.
 - **SCSS is opt-in, never default**: `scss: true` in config + user installs `sass`/`sass-embedded` (optional peer deps of the CLI). Pipeline lives in `packages/cli/src/stylesheet.ts`: `.scss` → Sass → lightningcss → same path with `.css`. Partials (`_*.scss`) are never emitted. Both dev and build go through `resolveStylesheet()` + `compileStylesheet()` — keep them the single source of truth for what a `.css` path maps to.
 - **Example site**: `example/` contains a reference site (JAP). Config paths point there: `example/blocks`, `example/site/pages`, `example/public`.
-- **Publishing**: `bun run publish-packages [patch|minor|major]` bumps all packages, runs checks, publishes to npm, tags git.
+- **Publishing**: `bun run release [patch|minor|major]` bumps all packages (and the scaffold template's deps), runs checks, commits, tags and pushes; the publish workflow does the npm publish.
+- **Tests**: core tests are unit tests; `packages/cli/test/build.test.ts` builds the fixture site in `packages/cli/test/fixtures/site` end to end. Add a block/page there when a build-time feature needs coverage.

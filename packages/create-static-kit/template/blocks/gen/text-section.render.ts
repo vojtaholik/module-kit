@@ -1,22 +1,27 @@
 // Auto-generated - DO NOT EDIT
-import { escapeHtml, escapeAttr, type RenderBlockInput } from "@static-block-kit/core";
-import { encodeSchemaAddress } from "@static-block-kit/core";
+import { escapeHtml, escapeAttr, renderSlot, assetUrl, type TypedRenderInput } from "@vojtaholik/static-kit-core";
+import { encodeSchemaAddress, registerBlockAssets, blockAssetMarker } from "@vojtaholik/static-kit-core";
+import type { TextSectionProps } from "../text-section.block.ts";
 
-export function renderTextSection(input: RenderBlockInput): string {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { props, ctx, addr } = input as { props: any; ctx: typeof input.ctx; addr: typeof input.addr };
+export function renderTextSection(input: TypedRenderInput<TextSectionProps>): string {
+  const { props, ctx, addr } = input;
+  const asset = (path: string) => assetUrl(ctx, path);
   let out = "";
   out += "<section";
   out += " class=\"";
   out += "section section--text section--tone-";
   out += escapeAttr(ctx.layout.tone);
   out += "\"";
-  out += " data-block-id=\"";
-  out += escapeAttr(addr.blockId);
-  out += "\"";
-  out += " data-schema-address=\"";
-  out += escapeAttr(encodeSchemaAddress(addr));
-  out += "\"";
+  if (ctx.isDev) {
+    out += " data-block-id=\"";
+    out += escapeAttr(addr.blockId);
+    out += "\"";
+    }
+  if (ctx.isDev) {
+    out += " data-schema-address=\"";
+    out += escapeAttr(encodeSchemaAddress(addr));
+    out += "\"";
+    }
   out += ">";
   out += "<div";
   out += " class=\"";
@@ -55,7 +60,12 @@ export function renderTextSection(input: RenderBlockInput): string {
     out += ">";
     out += "<a";
     out += " class=\"btn btn--primary\"";
-    out += " href=\"" + escapeAttr(props.cta.href) + "\"";
+    {
+      const _hrefVal: unknown = props.cta.href;
+      if (_hrefVal != null && _hrefVal !== false) {
+        out += " href=\"" + escapeAttr(_hrefVal) + "\"";
+      }
+    }
     out += ">";
     out += escapeHtml(props.cta.label);
     out += "</a>";

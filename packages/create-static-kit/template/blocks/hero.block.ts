@@ -1,5 +1,5 @@
-import { z } from "zod/v4";
 import { defineBlock } from "@vojtaholik/static-kit-core";
+import { z } from "zod/v4";
 import { renderHero } from "./gen/hero.render.ts";
 
 export const heroPropsSchema = z.object({

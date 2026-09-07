@@ -17,13 +17,12 @@ import { join } from "node:path";
 const root = join(import.meta.dirname!, "..");
 const args = process.argv.slice(2);
 const noBump = args.includes("--no-bump");
-const bump = (args.find(a => ["patch", "minor", "major"].includes(a)) || "patch") as "patch" | "minor" | "major";
+const bump = (args.find((a) => ["patch", "minor", "major"].includes(a)) || "patch") as
+  | "patch"
+  | "minor"
+  | "major";
 
-const packages = [
-  "packages/core",
-  "packages/cli",
-  "packages/create-static-kit",
-];
+const packages = ["packages/core", "packages/cli", "packages/create-static-kit"];
 
 // Read current version
 const corePkg = await Bun.file(join(root, "packages/core/package.json")).json();
@@ -41,7 +40,6 @@ if (noBump) {
     case "minor":
       newVersion = `${major}.${minor + 1}.0`;
       break;
-    case "patch":
     default:
       newVersion = `${major}.${minor}.${patch + 1}`;
       break;
@@ -53,12 +51,21 @@ console.log(`   ${noBump ? "(no bump)" : `${currentVersion} → ${newVersion} ($
 
 // Typecheck + test
 console.log("🔍 Running typecheck...");
-let result = Bun.spawnSync(["bun", "run", "typecheck"], { cwd: root, stdio: ["inherit", "inherit", "inherit"] });
-if (result.exitCode !== 0) { console.error("❌ Typecheck failed"); process.exit(1); }
+let result = Bun.spawnSync(["bun", "run", "typecheck"], {
+  cwd: root,
+  stdio: ["inherit", "inherit", "inherit"],
+});
+if (result.exitCode !== 0) {
+  console.error("❌ Typecheck failed");
+  process.exit(1);
+}
 
 console.log("\n🧪 Running tests...");
 result = Bun.spawnSync(["bun", "test"], { cwd: root, stdio: ["inherit", "inherit", "inherit"] });
-if (result.exitCode !== 0) { console.error("❌ Tests failed"); process.exit(1); }
+if (result.exitCode !== 0) {
+  console.error("❌ Tests failed");
+  process.exit(1);
+}
 
 // Bump versions
 if (!noBump) {
