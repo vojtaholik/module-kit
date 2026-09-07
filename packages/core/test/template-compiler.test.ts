@@ -231,7 +231,7 @@ describe("Template Compiler", () => {
       const template = '<a :href="props.url">link</a>';
       const result = compileTemplate(template, "test-block");
 
-      expect(result).toContain("const _hrefVal = props.url");
+      expect(result).toContain("const _hrefVal: unknown = props.url");
       expect(result).toContain("escapeAttr(_hrefVal)");
     });
 
@@ -239,15 +239,15 @@ describe("Template Compiler", () => {
       const template = '<a :href="props.url" :title="props.title">link</a>';
       const result = compileTemplate(template, "test-block");
 
-      expect(result).toContain("const _hrefVal = props.url");
-      expect(result).toContain("const _titleVal = props.title");
+      expect(result).toContain("const _hrefVal: unknown = props.url");
+      expect(result).toContain("const _titleVal: unknown = props.title");
     });
 
     test("compiles :class binding", () => {
       const template = '<div :class="props.className">content</div>';
       const result = compileTemplate(template, "test-block");
 
-      expect(result).toContain("const _classVal = props.className");
+      expect(result).toContain("const _classVal: unknown = props.className");
       expect(result).toContain("escapeAttr(_classVal)");
     });
 
@@ -256,7 +256,7 @@ describe("Template Compiler", () => {
       const result = compileTemplate(template, "test-block");
 
       expect(result).toContain('href=\\"/static\\"');
-      expect(result).toContain("const _titleVal = props.title");
+      expect(result).toContain("const _titleVal: unknown = props.title");
     });
 
     test("strips :key framework directive", () => {
@@ -271,8 +271,8 @@ describe("Template Compiler", () => {
       const template = '<input :disabled="props.isDisabled" />';
       const result = compileTemplate(template, "test-block");
 
-      expect(result).toContain("const _disabledVal = props.isDisabled");
-      expect(result).toContain("if (_disabledVal)");
+      expect(result).toContain("const _disabledVal: unknown = props.isDisabled");
+      expect(result).toContain("if (_disabledVal != null && _disabledVal !== false)");
     });
 
     test("compiles attribute with interpolation", () => {
@@ -288,7 +288,7 @@ describe("Template Compiler", () => {
       const template = '<div :data-id="props.id">content</div>';
       const result = compileTemplate(template, "test-block");
 
-      expect(result).toContain("_data_idVal = props.id");
+      expect(result).toContain("_data_idVal: unknown = props.id");
       expect(result).toContain("escapeAttr(_data_idVal)");
     });
   });
@@ -557,7 +557,7 @@ describe("Template Compiler", () => {
       const result = compileTemplate(template, "test-block");
 
       expect(result).toContain("if (props.show)");
-      expect(result).toContain("_classVal = props.className");
+      expect(result).toContain("_classVal: unknown = props.className");
       expect(result).toContain('id=\\"test\\"');
       expect(result).toContain("escapeHtml(props.title)");
     });
@@ -609,5 +609,68 @@ describe("Template Compiler", () => {
 
       expect(result).toContain("Hello 世界 🌍");
     });
+  });
+});
+
+describe("Template Compiler regressions", () => {
+  test("sibling elements can bind the same attribute name", () => {
+    const template = '<div><a :href="props.a">x</a><a :href="props.b">y</a></div>';
+    const result = compileTemplate(template, "test-block");
+
+    // Each binding is block-scoped so the generated module is valid JS
+    expect(result.match(/const _hrefVal: unknown =/g)?.length).toBe(2);
+    const js = new Bun.Transpiler({ loader: "ts" }).transformSync(
+      result.replace(/^import[^\n]*\n/gm, "").replace("export ", "")
+    );
+    expect(() => new Function(js)).not.toThrow();
+  });
+
+  test("v-if on a v-for element applies per iteration", () => {
+    const template = '<li v-for="it in props.items" v-if="it.show">{{ it.name }}</li>';
+    const result = compileTemplate(template, "test-block");
+
+    expect(result).toContain("for (const [_i, it]");
+    expect(result).toContain("if (it.show)");
+    expect(result).not.toContain("v-if");
+  });
+
+  test("v-if on a v-for template applies per iteration", () => {
+    const template = '<template v-for="it in props.items" v-if="it.show"><b>{{ it.name }}</b></template>';
+    const result = compileTemplate(template, "test-block");
+
+    expect(result).toContain("if (it.show)");
+    expect(result).toContain('out += "<b"');
+  });
+
+  test("dynamic attributes omit only null/undefined/false", () => {
+    const template = '<input :value="props.n">';
+    const result = compileTemplate(template, "test-block");
+
+    expect(result).toContain("if (_valueVal != null && _valueVal !== false)");
+  });
+
+  test("merges static class with :class", () => {
+    const template = '<div class="card" :class="props.extra">x</div>';
+    const result = compileTemplate(template, "test-block");
+
+    expect(result.match(/ class=/g)?.length).toBe(1);
+    expect(result).toContain('" class=\\"" + "card" + (_classVal');
+  });
+
+  test("merges interpolated static class with :class", () => {
+    const template = '<div class="card card--{{ props.kind }}" :class="props.extra">x</div>';
+    const result = compileTemplate(template, "test-block");
+
+    expect(result).toContain('"card card--" + escapeAttr(props.kind)');
+  });
+
+  test("render-slot fallback keeps the word 'out' intact", () => {
+    const template =
+      '<render-slot :block="props.b" :props="props.p">{{ props.out }} out of stock</render-slot>';
+    const result = compileTemplate(template, "test-block");
+
+    expect(result).toContain("_slot += escapeHtml(props.out)");
+    expect(result).toContain('_slot += " out of stock"');
+    expect(result).not.toContain("props._slot");
   });
 });

@@ -54,13 +54,17 @@ export function renderSectionHeader(input: RenderBlockInput): string {
     out += " width=\"100%\"";
     out += " height=\"auto\"";
     out += " loading=\"lazy\"";
-    const _srcVal = props.image.src;
-    if (_srcVal) {
-      out += " src=\"" + escapeAttr(_srcVal) + "\"";
+    {
+      const _srcVal: unknown = props.image.src;
+      if (_srcVal != null && _srcVal !== false) {
+        out += " src=\"" + escapeAttr(_srcVal) + "\"";
+      }
     }
-    const _altVal = props.image.alt;
-    if (_altVal) {
-      out += " alt=\"" + escapeAttr(_altVal) + "\"";
+    {
+      const _altVal: unknown = props.image.alt;
+      if (_altVal != null && _altVal !== false) {
+        out += " alt=\"" + escapeAttr(_altVal) + "\"";
+      }
     }
     out += ">";
     out += "</div>";
@@ -68,9 +72,11 @@ export function renderSectionHeader(input: RenderBlockInput): string {
   if (props.cta) {
     out += "<a";
     out += " class=\"btn btn--outline-dark btn--sm\"";
-    const _hrefVal = props.cta.href;
-    if (_hrefVal) {
-      out += " href=\"" + escapeAttr(_hrefVal) + "\"";
+    {
+      const _hrefVal: unknown = props.cta.href;
+      if (_hrefVal != null && _hrefVal !== false) {
+        out += " href=\"" + escapeAttr(_hrefVal) + "\"";
+      }
     }
     out += ">";
     out += escapeHtml(props.cta.label);

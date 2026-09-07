@@ -65,6 +65,8 @@ export async function compileBlockTemplates(
   for await (const file of glob.scan(blocksDir)) {
     files.push(join(blocksDir, file));
   }
+  // Deterministic output regardless of filesystem order
+  files.sort();
 
   if (files.length === 0) {
     console.log("No block templates found in", blocksDir);
@@ -144,10 +146,10 @@ export function render${pascalName}(input: RenderBlockInput): string {
 /**
  * Compile a list of nodes
  */
-function compileNodes(nodes: Node[], indent: number): string {
+function compileNodes(nodes: Node[], indent: number, out = "out"): string {
   let code = "";
   for (const node of nodes) {
-    code += compileNode(node, indent);
+    code += compileNode(node, indent, out);
   }
   return code;
 }
@@ -155,7 +157,7 @@ function compileNodes(nodes: Node[], indent: number): string {
 /**
  * Compile a single node
  */
-function compileNode(node: Node, indent: number): string {
+function compileNode(node: Node, indent: number, out = "out"): string {
   // Text node
   if (node.nodeName === "#text") {
     const text = node.value || "";
@@ -163,7 +165,7 @@ function compileNode(node: Node, indent: number): string {
     if (!text.trim()) {
       return "";
     }
-    return compileTextWithInterpolation(text, indent);
+    return compileTextWithInterpolation(text, indent, out);
   }
 
   // Comment node
@@ -173,7 +175,7 @@ function compileNode(node: Node, indent: number): string {
 
   // Document fragment
   if (node.nodeName === "#document-fragment") {
-    return compileNodes(node.childNodes || [], indent);
+    return compileNodes(node.childNodes || [], indent, out);
   }
 
   // Element node
@@ -184,33 +186,38 @@ function compileNode(node: Node, indent: number): string {
   // Check for v-for
   const vFor = getAttr(attrs, "v-for");
   if (vFor) {
-    return compileVFor(element, vFor, indent);
+    return compileVFor(element, vFor, indent, out);
   }
 
   // Check for v-if
   const vIf = getAttr(attrs, "v-if");
   if (vIf) {
-    return compileVIf(element, vIf, indent);
+    return compileVIf(element, vIf, indent, out);
   }
 
   // Handle <template> tag - just render children
   if (tagName === "template") {
-    return compileNodes(getChildren(element), indent);
+    return compileNodes(getChildren(element), indent, out);
   }
 
   // Handle <render-slot> - delegate rendering to another block with fallback
   if (tagName === "render-slot") {
-    return compileRenderSlot(element, indent);
+    return compileRenderSlot(element, indent, out);
   }
 
   // Regular element
-  return compileElement(element, indent);
+  return compileElement(element, indent, out);
 }
+
+/**
+ * Framework directives that should be stripped (not rendered as HTML attributes)
+ */
+const FRAMEWORK_DIRECTIVES = new Set(["key"]);
 
 /**
  * Compile a regular element
  */
-function compileElement(element: Element, indent: number): string {
+function compileElement(element: Element, indent: number, out = "out"): string {
   const pad = "  ".repeat(indent);
   const tagName = element.tagName || element.nodeName;
   const attrs = element.attrs || [];
@@ -218,83 +225,102 @@ function compileElement(element: Element, indent: number): string {
   let code = "";
 
   // Opening tag
-  code += `${pad}out += "<${tagName}";\n`;
+  code += `${pad}${out} += "<${tagName}";\n`;
 
-  // Attributes
+  // `class="static" :class="dyn"` → one merged class attribute
+  const staticClass = attrs.find((a) => a.name === "class");
+  const dynamicClass = attrs.find((a) => a.name === ":class");
+  const mergeClass = Boolean(staticClass && dynamicClass);
+
+  // Static attributes
   for (const attr of attrs) {
     // Skip directive attributes
     if (attr.name.startsWith("v-") || attr.name.startsWith(":")) {
       continue;
     }
+    if (mergeClass && attr.name === "class") {
+      continue;
+    }
 
-    // Check for dynamic binding with :
-    const bindMatch = attr.name.match(/^:(.+)$/);
-    if (bindMatch) {
-      const attrName = bindMatch[1];
-      code += `${pad}out += " ${attrName}=\\"" + escapeAttr(${attr.value}) + "\\"";\n`;
-    } else if (attr.value.includes("{{")) {
+    if (attr.value.includes("{{")) {
       // Interpolation in attribute value
-      code += compileAttrWithInterpolation(attr.name, attr.value, indent);
+      code += compileAttrWithInterpolation(attr.name, attr.value, indent, out);
     } else {
       // Static attribute
-      code += `${pad}out += " ${attr.name}=\\"${escapeStringLiteral(
+      code += `${pad}${out} += " ${attr.name}=\\"${escapeStringLiteral(
         attr.value
       )}\\"";\n`;
     }
   }
 
-  // Handle dynamic attributes with :
-  // Framework directives that should be stripped (not rendered as HTML attributes)
-  const frameworkDirectives = new Set(["key"]);
-
+  // Dynamic attributes with :
+  // Each binding lives in its own block scope so sibling elements can bind
+  // the same attribute name without redeclaring the temp const.
+  // Only null/undefined/false omit the attribute (0 and "" are rendered),
+  // mirroring Vue's attribute binding semantics.
   for (const attr of attrs) {
-    if (attr.name.startsWith(":")) {
-      const attrName = attr.name.slice(1);
-      // Skip framework directives like :key
-      if (frameworkDirectives.has(attrName)) {
-        continue;
-      }
-      // Conditionally render attribute only if value is truthy
-      const varName = attrName.replace(/[^a-zA-Z0-9_]/g, "_");
-      code += `${pad}const _${varName}Val = ${attr.value};\n`;
-      code += `${pad}if (_${varName}Val) {\n`;
-      code += `${pad}  out += " ${attrName}=\\"" + escapeAttr(_${varName}Val) + "\\"";\n`;
-      code += `${pad}}\n`;
+    if (!attr.name.startsWith(":")) continue;
+    const attrName = attr.name.slice(1);
+    if (FRAMEWORK_DIRECTIVES.has(attrName)) continue;
+
+    const varName = `_${attrName.replace(/[^a-zA-Z0-9_]/g, "_")}Val`;
+    code += `${pad}{\n`;
+    code += `${pad}  const ${varName}: unknown = ${attr.value};\n`;
+    if (mergeClass && attrName === "class") {
+      const staticExpr = attrValueExpr(staticClass!.value);
+      code += `${pad}  ${out} += " class=\\"" + ${staticExpr} + (${varName} != null && ${varName} !== false && ${varName} !== "" ? " " + escapeAttr(${varName}) : "") + "\\"";\n`;
+    } else {
+      code += `${pad}  if (${varName} != null && ${varName} !== false) {\n`;
+      code += `${pad}    ${out} += " ${attrName}=\\"" + escapeAttr(${varName}) + "\\"";\n`;
+      code += `${pad}  }\n`;
     }
+    code += `${pad}}\n`;
   }
 
-  // Self-closing tags
-  const voidElements = [
-    "area",
-    "base",
-    "br",
-    "col",
-    "embed",
-    "hr",
-    "img",
-    "input",
-    "link",
-    "meta",
-    "param",
-    "source",
-    "track",
-    "wbr",
-  ];
+  code += `${pad}${out} += ">";\n`;
 
-  if (voidElements.includes(tagName)) {
-    code += `${pad}out += ">";\n`;
+  // Void elements have no children and no closing tag
+  if (VOID_ELEMENTS.has(tagName)) {
     return code;
   }
 
-  code += `${pad}out += ">";\n`;
-
   // Children
-  code += compileNodes(element.childNodes || [], indent);
+  code += compileNodes(element.childNodes || [], indent, out);
 
   // Closing tag
-  code += `${pad}out += "</${tagName}>";\n`;
+  code += `${pad}${out} += "</${tagName}>";\n`;
 
   return code;
+}
+
+const VOID_ELEMENTS = new Set([
+  "area",
+  "base",
+  "br",
+  "col",
+  "embed",
+  "hr",
+  "img",
+  "input",
+  "link",
+  "meta",
+  "param",
+  "source",
+  "track",
+  "wbr",
+]);
+
+/**
+ * Build a JS expression producing an attribute value string,
+ * expanding {{ }} interpolations with escapeAttr().
+ */
+function attrValueExpr(value: string): string {
+  const parts = value.split(/(\{\{.+?\}\})/g).filter(Boolean);
+  const exprs = parts.map((part) => {
+    const match = part.match(/^\{\{\s*(.+?)\s*\}\}$/);
+    return match ? `escapeAttr(${match[1]})` : `"${escapeStringLiteral(part)}"`;
+  });
+  return exprs.length ? exprs.join(" + ") : '""';
 }
 
 /**
@@ -314,7 +340,8 @@ function getChildren(element: Element): Node[] {
 function compileVIf(
   element: Element,
   condition: string,
-  indent: number
+  indent: number,
+  out = "out"
 ): string {
   const pad = "  ".repeat(indent);
   let code = "";
@@ -339,10 +366,10 @@ function compileVIf(
       }
       return true;
     });
-    code += compileNodes(children, indent + 1);
+    code += compileNodes(children, indent + 1, out);
   } else {
     const cleanElement = { ...element, attrs: filteredAttrs };
-    code += compileElement(cleanElement, indent + 1);
+    code += compileElement(cleanElement, indent + 1, out);
   }
 
   code += `${pad}}\n`;
@@ -354,7 +381,12 @@ function compileVIf(
  * Compile v-for directive
  * Supports: "item in items", "item, i in items", "(item, i) in items"
  */
-function compileVFor(element: Element, expr: string, indent: number): string {
+function compileVFor(
+  element: Element,
+  expr: string,
+  indent: number,
+  out = "out"
+): string {
   const pad = "  ".repeat(indent);
   let code = "";
 
@@ -373,6 +405,15 @@ function compileVFor(element: Element, expr: string, indent: number): string {
 
   // Remove v-for from attrs
   const filteredAttrs = (element.attrs || []).filter((a) => a.name !== "v-for");
+  const cleanElement = { ...element, attrs: filteredAttrs };
+
+  // v-if on the same element applies per iteration
+  const vIf = getAttr(filteredAttrs, "v-if");
+  if (vIf) {
+    code += compileVIf(cleanElement, vIf, indent + 1, out);
+    code += `${pad}}\n`;
+    return code;
+  }
 
   // If it's a template, render its children directly
   if (element.tagName === "template") {
@@ -387,10 +428,9 @@ function compileVFor(element: Element, expr: string, indent: number): string {
       }
       return true;
     });
-    code += compileNodes(children, indent + 1);
+    code += compileNodes(children, indent + 1, out);
   } else {
-    const cleanElement = { ...element, attrs: filteredAttrs };
-    code += compileElement(cleanElement, indent + 1);
+    code += compileElement(cleanElement, indent + 1, out);
   }
 
   code += `${pad}}\n`;
@@ -409,7 +449,7 @@ function compileVFor(element: Element, expr: string, indent: number): string {
  * - :prop-path - Optional expression for explicit prop path (alternative to :index)
  * - Children are rendered as fallback when block is not specified or invalid
  */
-function compileRenderSlot(element: Element, indent: number): string {
+function compileRenderSlot(element: Element, indent: number, out = "out"): string {
   const pad = "  ".repeat(indent);
   const attrs = element.attrs || [];
 
@@ -456,14 +496,14 @@ function compileRenderSlot(element: Element, indent: number): string {
   });
 
   // Generate the renderSlot call
-  code += `${pad}out += renderSlot(\n`;
+  code += `${pad}${out} += renderSlot(\n`;
   code += `${pad}  ${blockExpr},\n`;
   code += `${pad}  ${propsExpr},\n`;
   code += `${pad}  ctx,\n`;
   code += `${pad}  ${addrExpr},\n`;
   code += `${pad}  () => {\n`;
   code += `${pad}    let _slot = "";\n`;
-  code += compileNodes(children, indent + 2).replace(/\bout\b/g, "_slot");
+  code += compileNodes(children, indent + 2, "_slot");
   code += `${pad}    return _slot;\n`;
   code += `${pad}  }\n`;
   code += `${pad});\n`;
@@ -475,7 +515,11 @@ function compileRenderSlot(element: Element, indent: number): string {
  * Compile text with {{ interpolation }} and {{{ raw }}}
  * Normalizes whitespace: trims edges and collapses internal whitespace to single spaces
  */
-function compileTextWithInterpolation(text: string, indent: number): string {
+function compileTextWithInterpolation(
+  text: string,
+  indent: number,
+  out = "out"
+): string {
   const pad = "  ".repeat(indent);
   let code = "";
 
@@ -499,14 +543,14 @@ function compileTextWithInterpolation(text: string, indent: number): string {
     // Check for triple braces (raw output)
     const rawMatch = part.match(/^\{\{\{\s*(.+?)\s*\}\}\}$/);
     if (rawMatch) {
-      code += `${pad}out += ${rawMatch[1]};\n`;
+      code += `${pad}${out} += ${rawMatch[1]};\n`;
       continue;
     }
 
     // Check for double braces (escaped output)
     const escapedMatch = part.match(/^\{\{\s*(.+?)\s*\}\}$/);
     if (escapedMatch) {
-      code += `${pad}out += escapeHtml(${escapedMatch[1]});\n`;
+      code += `${pad}${out} += escapeHtml(${escapedMatch[1]});\n`;
       continue;
     }
 
@@ -528,7 +572,7 @@ function compileTextWithInterpolation(text: string, indent: number): string {
 
     const escaped = escapeStringLiteral(normalized);
     if (escaped) {
-      code += `${pad}out += "${escaped}";\n`;
+      code += `${pad}${out} += "${escaped}";\n`;
     }
   }
 
@@ -541,27 +585,28 @@ function compileTextWithInterpolation(text: string, indent: number): string {
 function compileAttrWithInterpolation(
   name: string,
   value: string,
-  indent: number
+  indent: number,
+  out = "out"
 ): string {
   const pad = "  ".repeat(indent);
 
   // Split on {{ ... }}
   const parts = value.split(/(\{\{.+?\}\})/g);
 
-  let code = `${pad}out += " ${name}=\\"";\n`;
+  let code = `${pad}${out} += " ${name}=\\"";\n`;
 
   for (const part of parts) {
     if (!part) continue;
 
     const match = part.match(/^\{\{\s*(.+?)\s*\}\}$/);
     if (match) {
-      code += `${pad}out += escapeAttr(${match[1]});\n`;
+      code += `${pad}${out} += escapeAttr(${match[1]});\n`;
     } else {
-      code += `${pad}out += "${escapeStringLiteral(part)}";\n`;
+      code += `${pad}${out} += "${escapeStringLiteral(part)}";\n`;
     }
   }
 
-  code += `${pad}out += "\\"";\n`;
+  code += `${pad}${out} += "\\"";\n`;
 
   return code;
 }

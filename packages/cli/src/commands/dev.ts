@@ -153,8 +153,9 @@ function broadcastReload(type: "full" | "css" = "full") {
 const watchDirs = [blocksDir, pagesDir, publicDir, svgDir];
 
 async function handleFileChange(filename: string, dir: string) {
-  // Ignore generated files
-  if (filename.includes("/gen/") || filename.endsWith(".render.ts")) return;
+  // Ignore generated files (filename is relative to the watched dir, so
+  // "gen/index.ts" has no leading slash)
+  if (/(^|[\/\\])gen[\/\\]/.test(filename) || filename.endsWith(".render.ts")) return;
 
   // SVG in svg/ directory changed - recompile spritesheet
   if (filename.endsWith(".svg") && dir === svgDir) {
@@ -410,6 +411,7 @@ Bun.serve({
           templateDir: pagesDir,
           isDev: true,
           assetBase: "/",
+          vlna: config.vlna,
         });
         html = await processHtmlOutput(html, config.htmlOutput);
 

@@ -8,9 +8,11 @@ export function renderTeaser(input: RenderBlockInput): string {
   let out = "";
   out += "<a";
   out += " class=\"card\"";
-  const _hrefVal = props.link.href;
-  if (_hrefVal) {
-    out += " href=\"" + escapeAttr(_hrefVal) + "\"";
+  {
+    const _hrefVal: unknown = props.link.href;
+    if (_hrefVal != null && _hrefVal !== false) {
+      out += " href=\"" + escapeAttr(_hrefVal) + "\"";
+    }
   }
   out += ">";
   if (props.image) {
@@ -19,13 +21,17 @@ export function renderTeaser(input: RenderBlockInput): string {
     out += ">";
     out += "<img";
     out += " loading=\"lazy\"";
-    const _srcVal = props.image.src;
-    if (_srcVal) {
-      out += " src=\"" + escapeAttr(_srcVal) + "\"";
+    {
+      const _srcVal: unknown = props.image.src;
+      if (_srcVal != null && _srcVal !== false) {
+        out += " src=\"" + escapeAttr(_srcVal) + "\"";
+      }
     }
-    const _altVal = props.image.alt;
-    if (_altVal) {
-      out += " alt=\"" + escapeAttr(_altVal) + "\"";
+    {
+      const _altVal: unknown = props.image.alt;
+      if (_altVal != null && _altVal !== false) {
+        out += " alt=\"" + escapeAttr(_altVal) + "\"";
+      }
     }
     out += ">";
     out += "</div>";

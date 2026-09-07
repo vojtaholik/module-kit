@@ -437,6 +437,18 @@ How it works:
 - `styles.css` **and** `styles.scss` side by side is an error — one output, one source.
 - `.scss` files present but `scss` left off? The CLI prints a hint and copies them verbatim, as before.
 
+## Czech typography (vlna)
+
+Rendered HTML gets non-breaking spaces after short Czech prepositions (`k`, `s`, `v`, `bez`, `pro`, …) and widow prevention, based on ČSN 01 6910. By default this runs only when `<html lang>` is `cs` or `sk`. Override in config:
+
+```ts
+export default defineConfig({
+  vlna: "auto", // default — follow <html lang>
+  // vlna: true   // always on
+  // vlna: false  // always off
+});
+```
+
 ## Dev Server Features
 
 - **Hot reload** - Changes to templates, CSS, and pages trigger instant refresh

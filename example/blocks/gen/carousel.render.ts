@@ -63,20 +63,26 @@ export function renderCarousel(input: RenderBlockInput): string {
   out += "</div>";
   out += "<div";
   out += " data-carousel=\"\"";
-  const _classVal = 'carousel carousel--' + props.variant;
-  if (_classVal) {
-    out += " class=\"" + escapeAttr(_classVal) + "\"";
+  {
+    const _classVal: unknown = 'carousel carousel--' + props.variant;
+    if (_classVal != null && _classVal !== false) {
+      out += " class=\"" + escapeAttr(_classVal) + "\"";
+    }
   }
   out += ">";
   for (const [_i, item] of (props.items).entries()) {
     out += "<a";
-    const _hrefVal = item.href || '#';
-    if (_hrefVal) {
-      out += " href=\"" + escapeAttr(_hrefVal) + "\"";
+    {
+      const _hrefVal: unknown = item.href || '#';
+      if (_hrefVal != null && _hrefVal !== false) {
+        out += " href=\"" + escapeAttr(_hrefVal) + "\"";
+      }
     }
-    const _classVal = 'carousel__card carousel__card--' + props.variant;
-    if (_classVal) {
-      out += " class=\"" + escapeAttr(_classVal) + "\"";
+    {
+      const _classVal: unknown = 'carousel__card carousel__card--' + props.variant;
+      if (_classVal != null && _classVal !== false) {
+        out += " class=\"" + escapeAttr(_classVal) + "\"";
+      }
     }
     out += ">";
     out += "<div";
@@ -84,13 +90,17 @@ export function renderCarousel(input: RenderBlockInput): string {
     out += ">";
     out += "<img";
     out += " loading=\"lazy\"";
-    const _srcVal = item.image.src;
-    if (_srcVal) {
-      out += " src=\"" + escapeAttr(_srcVal) + "\"";
+    {
+      const _srcVal: unknown = item.image.src;
+      if (_srcVal != null && _srcVal !== false) {
+        out += " src=\"" + escapeAttr(_srcVal) + "\"";
+      }
     }
-    const _altVal = item.image.alt;
-    if (_altVal) {
-      out += " alt=\"" + escapeAttr(_altVal) + "\"";
+    {
+      const _altVal: unknown = item.image.alt;
+      if (_altVal != null && _altVal !== false) {
+        out += " alt=\"" + escapeAttr(_altVal) + "\"";
+      }
     }
     out += ">";
     out += "</div>";

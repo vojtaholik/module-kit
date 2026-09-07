@@ -30,13 +30,17 @@ export function renderBusinessCard(input: RenderBlockInput): string {
     out += ">";
     out += "<img";
     out += " loading=\"lazy\"";
-    const _srcVal = props.contactPerson.image.src;
-    if (_srcVal) {
-      out += " src=\"" + escapeAttr(_srcVal) + "\"";
+    {
+      const _srcVal: unknown = props.contactPerson.image.src;
+      if (_srcVal != null && _srcVal !== false) {
+        out += " src=\"" + escapeAttr(_srcVal) + "\"";
+      }
     }
-    const _altVal = props.contactPerson.image.alt;
-    if (_altVal) {
-      out += " alt=\"" + escapeAttr(_altVal) + "\"";
+    {
+      const _altVal: unknown = props.contactPerson.image.alt;
+      if (_altVal != null && _altVal !== false) {
+        out += " alt=\"" + escapeAttr(_altVal) + "\"";
+      }
     }
     out += ">";
     out += "<div";
@@ -75,9 +79,11 @@ export function renderBusinessCard(input: RenderBlockInput): string {
   out += ">";
   out += "<a";
   out += " class=\"btn btn--gold\"";
-  const _hrefVal = props.primaryCta.href;
-  if (_hrefVal) {
-    out += " href=\"" + escapeAttr(_hrefVal) + "\"";
+  {
+    const _hrefVal: unknown = props.primaryCta.href;
+    if (_hrefVal != null && _hrefVal !== false) {
+      out += " href=\"" + escapeAttr(_hrefVal) + "\"";
+    }
   }
   out += ">";
   out += escapeHtml(props.primaryCta.label);
@@ -85,9 +91,11 @@ export function renderBusinessCard(input: RenderBlockInput): string {
   for (const [_i, link] of (props.contactLinks).entries()) {
     out += "<a";
     out += " class=\"btn btn--outline-light\"";
-    const _hrefVal = link.href;
-    if (_hrefVal) {
-      out += " href=\"" + escapeAttr(_hrefVal) + "\"";
+    {
+      const _hrefVal: unknown = link.href;
+      if (_hrefVal != null && _hrefVal !== false) {
+        out += " href=\"" + escapeAttr(_hrefVal) + "\"";
+      }
     }
     out += ">";
     out += escapeHtml(link.label);

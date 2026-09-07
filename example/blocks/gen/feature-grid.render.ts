@@ -77,9 +77,11 @@ export function renderFeatureGrid(input: RenderBlockInput): string {
     if (feature.link) {
       out += "<a";
       out += " class=\"card__link\"";
-      const _hrefVal = feature.link.href;
-      if (_hrefVal) {
-        out += " href=\"" + escapeAttr(_hrefVal) + "\"";
+      {
+        const _hrefVal: unknown = feature.link.href;
+        if (_hrefVal != null && _hrefVal !== false) {
+          out += " href=\"" + escapeAttr(_hrefVal) + "\"";
+        }
       }
       out += ">";
       out += escapeHtml(feature.link.label);

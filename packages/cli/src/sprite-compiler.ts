@@ -46,7 +46,11 @@ export async function compileSpritesheet(
   const symbols: string[] = [];
   const glob = new Glob("*.svg");
 
-  for await (const file of glob.scan(inputDir)) {
+  const files: string[] = [];
+  for await (const file of glob.scan(inputDir)) files.push(file);
+  files.sort(); // deterministic output regardless of filesystem order
+
+  for (const file of files) {
     const filePath = join(inputDir, file);
     const content = await Bun.file(filePath).text();
 

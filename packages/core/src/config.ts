@@ -26,6 +26,12 @@ export const configSchema = z.object({
    * `sass-embedded` to be installed in the project.
    */
   scss: z.boolean().default(false),
+  /**
+   * Czech typography (vlna): non-breaking spaces after short prepositions and
+   * widow prevention. "auto" applies it when `<html lang>` is cs or sk;
+   * true/false force it on or off for every page.
+   */
+  vlna: z.union([z.boolean(), z.literal("auto")]).default("auto"),
   /** URL path prefix for production builds — all internal links get this prefix */
   basePath: z
     .string()

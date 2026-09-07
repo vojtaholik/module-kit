@@ -89,6 +89,7 @@ async function build() {
       isDev: false,
       assetBase: "/",
       cacheBust: buildTimestamp,
+      vlna: config.vlna,
     });
     html = rewriteBasePath(html, config.basePath);
     html = await processHtmlOutput(html, config.htmlOutput);

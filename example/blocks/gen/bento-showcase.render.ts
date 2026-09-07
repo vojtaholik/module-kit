@@ -26,21 +26,27 @@ export function renderBentoShowcase(input: RenderBlockInput): string {
   out += ">";
   out += "<a";
   out += " class=\"bento-card bento-card--featured\"";
-  const _hrefVal = props.featured.href;
-  if (_hrefVal) {
-    out += " href=\"" + escapeAttr(_hrefVal) + "\"";
+  {
+    const _hrefVal: unknown = props.featured.href;
+    if (_hrefVal != null && _hrefVal !== false) {
+      out += " href=\"" + escapeAttr(_hrefVal) + "\"";
+    }
   }
   out += ">";
   out += "<img";
   out += " class=\"bento-card__image\"";
   out += " loading=\"lazy\"";
-  const _srcVal = props.featured.image.src;
-  if (_srcVal) {
-    out += " src=\"" + escapeAttr(_srcVal) + "\"";
+  {
+    const _srcVal: unknown = props.featured.image.src;
+    if (_srcVal != null && _srcVal !== false) {
+      out += " src=\"" + escapeAttr(_srcVal) + "\"";
+    }
   }
-  const _altVal = props.featured.image.alt;
-  if (_altVal) {
-    out += " alt=\"" + escapeAttr(_altVal) + "\"";
+  {
+    const _altVal: unknown = props.featured.image.alt;
+    if (_altVal != null && _altVal !== false) {
+      out += " alt=\"" + escapeAttr(_altVal) + "\"";
+    }
   }
   out += ">";
   out += "<div";
@@ -82,21 +88,27 @@ export function renderBentoShowcase(input: RenderBlockInput): string {
   for (const [_i, item] of (props.items).entries()) {
     out += "<a";
     out += " class=\"bento-card\"";
-    const _hrefVal = item.href;
-    if (_hrefVal) {
-      out += " href=\"" + escapeAttr(_hrefVal) + "\"";
+    {
+      const _hrefVal: unknown = item.href;
+      if (_hrefVal != null && _hrefVal !== false) {
+        out += " href=\"" + escapeAttr(_hrefVal) + "\"";
+      }
     }
     out += ">";
     out += "<img";
     out += " class=\"bento-card__image\"";
     out += " loading=\"lazy\"";
-    const _srcVal = item.image.src;
-    if (_srcVal) {
-      out += " src=\"" + escapeAttr(_srcVal) + "\"";
+    {
+      const _srcVal: unknown = item.image.src;
+      if (_srcVal != null && _srcVal !== false) {
+        out += " src=\"" + escapeAttr(_srcVal) + "\"";
+      }
     }
-    const _altVal = item.image.alt;
-    if (_altVal) {
-      out += " alt=\"" + escapeAttr(_altVal) + "\"";
+    {
+      const _altVal: unknown = item.image.alt;
+      if (_altVal != null && _altVal !== false) {
+        out += " alt=\"" + escapeAttr(_altVal) + "\"";
+      }
     }
     out += ">";
     out += "<div";

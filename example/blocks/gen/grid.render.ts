@@ -22,9 +22,11 @@ export function renderGrid(input: RenderBlockInput): string {
   out += " class=\"container container--wide\"";
   out += ">";
   out += "<div";
-  const _classVal = `grid${props.columns !== 'auto' ? ` grid--${props.columns}` : ''}`;
-  if (_classVal) {
-    out += " class=\"" + escapeAttr(_classVal) + "\"";
+  {
+    const _classVal: unknown = `grid${props.columns !== 'auto' ? ` grid--${props.columns}` : ''}`;
+    if (_classVal != null && _classVal !== false) {
+      out += " class=\"" + escapeAttr(_classVal) + "\"";
+    }
   }
   out += ">";
   for (const [i, item] of (props.items).entries()) {

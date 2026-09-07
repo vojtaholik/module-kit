@@ -841,3 +841,52 @@ describe("HTML Renderer", () => {
     });
   });
 });
+
+describe("HTML Renderer regressions", () => {
+  const page = {
+    id: "p",
+    path: "/",
+    title: "Page Title",
+    template: "base.html",
+    regions: { main: { blocks: [] } },
+  };
+
+  const render = (template: string, extra: Partial<RenderPageOptions> = {}) =>
+    renderPage(page, {
+      templateDir: "/t",
+      readFile: async () => template,
+      isDev: false,
+      ...extra,
+    });
+
+  test("fills an empty <title></title>", async () => {
+    const html = await render("<html><head><title></title></head><body></body></html>");
+    expect(html).toContain("<title>Page Title</title>");
+  });
+
+  test("vlna auto: applied for lang=cs", async () => {
+    const html = await render('<html lang="cs"><body><p>jdu k tobě</p></body></html>');
+    expect(html).toContain("k tobě");
+  });
+
+  test("vlna auto: skipped for lang=en", async () => {
+    const html = await render('<html lang="en"><body><p>I am a pro developer</p></body></html>');
+    expect(html).toContain("I am a pro developer");
+    expect(html).not.toContain(" ");
+  });
+
+  test("vlna auto: skipped when lang is missing", async () => {
+    const html = await render("<html><body><p>I am a pro</p></body></html>");
+    expect(html).not.toContain(" ");
+  });
+
+  test("vlna: true forces it on regardless of lang", async () => {
+    const html = await render('<html lang="en"><body><p>jdu k tobě</p></body></html>', { vlna: true });
+    expect(html).toContain("k tobě");
+  });
+
+  test("vlna: false forces it off regardless of lang", async () => {
+    const html = await render('<html lang="cs"><body><p>jdu k tobě</p></body></html>', { vlna: false });
+    expect(html).toContain("jdu k tobě");
+  });
+});

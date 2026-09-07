@@ -17,9 +17,11 @@ export function renderHero(input: RenderBlockInput): string {
   out += " data-schema-address=\"";
   out += escapeAttr(encodeSchemaAddress(addr));
   out += "\"";
-  const _styleVal = props.backgroundImage ? 'background-image: url(' + props.backgroundImage.src + ')' : '';
-  if (_styleVal) {
-    out += " style=\"" + escapeAttr(_styleVal) + "\"";
+  {
+    const _styleVal: unknown = props.backgroundImage ? 'background-image: url(' + props.backgroundImage.src + ')' : '';
+    if (_styleVal != null && _styleVal !== false) {
+      out += " style=\"" + escapeAttr(_styleVal) + "\"";
+    }
   }
   out += ">";
   out += "<div";
@@ -39,9 +41,11 @@ export function renderHero(input: RenderBlockInput): string {
   for (const [_i, link] of (props.links).entries()) {
     out += "<a";
     out += " class=\"btn btn--sm btn--outline\"";
-    const _hrefVal = link.href;
-    if (_hrefVal) {
-      out += " href=\"" + escapeAttr(_hrefVal) + "\"";
+    {
+      const _hrefVal: unknown = link.href;
+      if (_hrefVal != null && _hrefVal !== false) {
+        out += " href=\"" + escapeAttr(_hrefVal) + "\"";
+      }
     }
     out += ">";
     out += escapeHtml(link.label);

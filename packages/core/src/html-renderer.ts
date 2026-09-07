@@ -88,6 +88,22 @@ export interface RenderPageOptions {
   readFile?: (path: string) => Promise<string>;
   /** Timestamp to append as ?v= to .css and .js references for cache-busting */
   cacheBust?: number;
+  /**
+   * Czech typography (non-breaking spaces after short prepositions, widow
+   * prevention). `"auto"` (default) applies it only when `<html lang>` is
+   * Czech or Slovak; `true`/`false` force it on or off.
+   */
+  vlna?: boolean | "auto";
+}
+
+/** Languages whose typography rules vlna implements */
+const VLNA_LANGS = ["cs", "sk"];
+
+function shouldApplyVlna(setting: boolean | "auto", lang: string | undefined): boolean {
+  if (setting !== "auto") return setting;
+  if (!lang) return false;
+  const primary = lang.toLowerCase().split(/[-_]/)[0] ?? "";
+  return VLNA_LANGS.includes(primary);
 }
 
 /**
@@ -109,20 +125,21 @@ export async function renderPage(
 
   // Track regions and their rendered content
   const regionContent: Record<string, string> = {};
+  let htmlLang: string | undefined;
 
   // Find and update elements
   walkTree(document, (node) => {
-    // Update <title>
+    // Update <title> (works for an empty <title></title> too)
     if (node.nodeName === "title") {
-      const textNode = node.childNodes?.[0];
-      if (textNode && textNode.nodeName === "#text") {
-        textNode.value = page.title;
-      }
+      node.childNodes = [{ nodeName: "#text", value: page.title, parentNode: node } as Node];
     }
 
-    // Update <html> attributes (data-page-id only in dev for HMR)
-    if (node.nodeName === "html" && options.isDev) {
-      setAttr(node, "data-page-id", page.id);
+    if (node.nodeName === "html") {
+      htmlLang = getAttr(node, "lang");
+      // data-page-id only in dev for HMR
+      if (options.isDev) {
+        setAttr(node, "data-page-id", page.id);
+      }
     }
 
     if (node.nodeName === 'main' && page.density) {
@@ -189,7 +206,9 @@ export async function renderPage(
   }
 
   // Czech typography: non-breaking spaces after single-char prepositions
-  html = vlnaHtml(html);
+  if (shouldApplyVlna(options.vlna ?? "auto", htmlLang)) {
+    html = vlnaHtml(html);
+  }
 
   // Dev mode: inject overlay. Production: strip dev attributes.
   if (options.isDev) {

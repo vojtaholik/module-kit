@@ -58,13 +58,17 @@ export function renderLatestPosts(input: RenderBlockInput): string {
       out += ">";
       out += "<img";
       out += " loading=\"lazy\"";
-      const _srcVal = post.image.src;
-      if (_srcVal) {
-        out += " src=\"" + escapeAttr(_srcVal) + "\"";
+      {
+        const _srcVal: unknown = post.image.src;
+        if (_srcVal != null && _srcVal !== false) {
+          out += " src=\"" + escapeAttr(_srcVal) + "\"";
+        }
       }
-      const _altVal = post.image.alt;
-      if (_altVal) {
-        out += " alt=\"" + escapeAttr(_altVal) + "\"";
+      {
+        const _altVal: unknown = post.image.alt;
+        if (_altVal != null && _altVal !== false) {
+          out += " alt=\"" + escapeAttr(_altVal) + "\"";
+        }
       }
       out += ">";
       out += "</div>";
@@ -93,9 +97,11 @@ export function renderLatestPosts(input: RenderBlockInput): string {
     }
     out += "<a";
     out += " class=\"card__link\"";
-    const _hrefVal = post.link.href;
-    if (_hrefVal) {
-      out += " href=\"" + escapeAttr(_hrefVal) + "\"";
+    {
+      const _hrefVal: unknown = post.link.href;
+      if (_hrefVal != null && _hrefVal !== false) {
+        out += " href=\"" + escapeAttr(_hrefVal) + "\"";
+      }
     }
     out += ">";
     out += escapeHtml(post.link.label);
@@ -110,9 +116,11 @@ export function renderLatestPosts(input: RenderBlockInput): string {
     out += ">";
     out += "<a";
     out += " class=\"btn btn--secondary\"";
-    const _hrefVal = props.viewAllLink.href;
-    if (_hrefVal) {
-      out += " href=\"" + escapeAttr(_hrefVal) + "\"";
+    {
+      const _hrefVal: unknown = props.viewAllLink.href;
+      if (_hrefVal != null && _hrefVal !== false) {
+        out += " href=\"" + escapeAttr(_hrefVal) + "\"";
+      }
     }
     out += ">";
     out += escapeHtml(props.viewAllLink.label);
