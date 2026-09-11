@@ -24,3 +24,4 @@ bun.lockb
 # CLI test fixture output
 packages/cli/test/fixtures/**/gen/
 packages/cli/test/fixtures/**/dist/
+packages/cli/test/fixtures/.scratch/

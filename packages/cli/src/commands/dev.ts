@@ -15,11 +15,11 @@ import {
   blockRegistry,
   compileBlockTemplates,
   decodeSchemaAddress,
-  type PageConfig,
   renderPage,
 } from "@vojtaholik/static-kit-core";
 import { loadConfig, resolvePath } from "../config-loader.ts";
 import { processHtmlOutput } from "../html-output.ts";
+import { reloadSiteModules } from "../site-modules.ts";
 import { compileSpritesheet } from "../sprite-compiler.ts";
 import {
   compileStylesheetCached,
@@ -65,35 +65,17 @@ try {
   if (hint) console.warn(`ℹ ${hint}`);
 }
 
-// Hot-reloadable module loader
-// bun --watch can't trace dynamic import() with computed paths,
-// so we use require() + cache clearing to reload pages/blocks in-process.
-let pages: PageConfig[];
-let getPageByPath: (path: string) => PageConfig | undefined;
+// Hot-reloadable module loader. Uses await import() so pages/blocks may use
+// top-level await; see site-modules.ts for why the cache eviction is needed.
+let site = await reloadSiteModules(blocksDir, pagesDir);
 
-function clearModuleCache(...dirs: string[]) {
-  for (const key of Object.keys(require.cache)) {
-    if (dirs.some((dir) => key.startsWith(dir))) {
-      delete require.cache[key];
-    }
+async function reloadModules() {
+  try {
+    site = await reloadSiteModules(blocksDir, pagesDir);
+  } catch (err) {
+    console.error("⚠ Module reload failed (serving last good state):", err);
   }
 }
-
-function reloadModules() {
-  clearModuleCache(blocksDir, pagesDir);
-
-  blockRegistry.clear();
-  const blocksModule = require(join(blocksDir, "index.ts"));
-  if (typeof blocksModule.registerAllBlocks === "function") {
-    blocksModule.registerAllBlocks();
-  }
-
-  const pagesModule = require(join(pagesDir, "index.ts"));
-  pages = pagesModule.pages;
-  getPageByPath = pagesModule.getPageByPath;
-}
-
-reloadModules();
 
 const PORT = config.devPort;
 const publicPath = config.publicPath; // e.g. "/public"
@@ -184,22 +166,14 @@ async function handleFileChange(filename: string, dir: string) {
       genDir: join(blocksDir, "gen"),
       typed: config.typedTemplates,
     });
-    try {
-      reloadModules();
-    } catch (err) {
-      console.error("⚠ Module reload failed:", err);
-    }
+    await reloadModules();
     broadcastReload("full");
     return;
   }
 
   // Source file changed - reload modules in-process, then broadcast
   if (filename.endsWith(".ts") || filename.endsWith(".js")) {
-    try {
-      reloadModules();
-    } catch (err) {
-      console.error("⚠ Module reload failed:", err);
-    }
+    await reloadModules();
     broadcastReload("full");
   }
 }
@@ -283,7 +257,7 @@ Bun.serve({
       // Dev API endpoints
       if (path === "/__pages") {
         return Response.json(
-          pages.map((p) => ({
+          site.pages.map((p) => ({
             id: p.id,
             path: p.path,
             title: p.title,
@@ -293,7 +267,7 @@ Bun.serve({
 
       if (path === "/__site") {
         return Response.json({
-          pages: pages.map((p) => ({
+          pages: site.pages.map((p) => ({
             id: p.id,
             path: p.path,
             title: p.title,
@@ -310,7 +284,7 @@ Bun.serve({
 
         try {
           const decoded = decodeSchemaAddress(address);
-          const page = pages.find((p) => p.id === decoded.pageId);
+          const page = site.pages.find((p) => p.id === decoded.pageId);
           const region = page?.regions[decoded.region];
           const block = region?.blocks.find((b) => b.id === decoded.blockId);
           const blockDef = block ? blockRegistry.get(block.type) : null;
@@ -394,7 +368,7 @@ Bun.serve({
 
       // Page routes
       const pagePath = path === "/" ? "/" : path.replace(/\/$/, "");
-      const page = getPageByPath(pagePath);
+      const page = site.getPageByPath(pagePath);
 
       if (page) {
         let html = await renderPage(page, {
@@ -443,7 +417,7 @@ Bun.serve({
  */
 function renderNotFoundPage(requested: string): string {
   const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
-  const pageRows = pages
+  const pageRows = site.pages
     .map(
       (p) =>
         `<li><a href="${esc(p.path)}">${esc(p.path)}</a> <span class="muted">${esc(p.title)} · ${esc(p.id)}</span></li>`
@@ -473,7 +447,7 @@ function renderNotFoundPage(requested: string): string {
 <body>
 <h1>No page at <code>${esc(requested)}</code></h1>
 <p class="muted">static-kit dev server · this page is never emitted by <code>build</code></p>
-<h2>Pages (${pages.length})</h2>
+<h2>Pages (${site.pages.length})</h2>
 <ul>${pageRows || '<li class="muted">none exported from pages/index.ts</li>'}</ul>
 <h2>Registered blocks (${blockRegistry.types().length})</h2>
 <ul>${blockRows || '<li class="muted">none — is registerAllBlocks() exported from blocks/index.ts?</li>'}</ul>

@@ -503,6 +503,7 @@ export default defineConfig({
 - **Alt+click inspector** - Click any block while holding Alt to see its schema address
 - **Slot error toast** - Validation errors for `<render-slot>` shown in bottom-right corner
 - **404 page** - Lists every page path and registered block type, so a typo in a route or a block that never got registered is obvious
+- **Top-level await** - `blocks/` and `site/pages/` are loaded with `await import()` in both dev and build, so a module may `await` at top level (a syntax highlighter, a fetch at build time). Hot reload re-evaluates the whole graph under those directories.
 - **API endpoints:**
   - `/__pages` - List all pages
   - `/__site` - Full site config
