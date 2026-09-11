@@ -1,5 +1,5 @@
-import { z } from "zod/v4";
 import { defineBlock } from "@vojtaholik/static-kit-core";
+import { z } from "zod/v4";
 import { renderFeatureGrid } from "./gen/feature-grid.render.ts";
 
 export const featureGridPropsSchema = z.object({

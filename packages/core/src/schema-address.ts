@@ -46,10 +46,7 @@ export function decodeSchemaAddress(encoded: string): SchemaAddress {
 /**
  * Create a schema address for a specific prop path within a block
  */
-export function withPropPath(
-  addr: SchemaAddress,
-  propPath: string
-): SchemaAddress {
+export function withPropPath(addr: SchemaAddress, propPath: string): SchemaAddress {
   return { ...addr, propPath };
 }
 
@@ -57,7 +54,5 @@ export function withPropPath(
  * Check if an address points to a specific block (ignoring propPath)
  */
 export function isSameBlock(a: SchemaAddress, b: SchemaAddress): boolean {
-  return (
-    a.pageId === b.pageId && a.region === b.region && a.blockId === b.blockId
-  );
+  return a.pageId === b.pageId && a.region === b.region && a.blockId === b.blockId;
 }

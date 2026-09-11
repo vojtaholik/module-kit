@@ -15,6 +15,7 @@ console.log("🔨 Compiling block templates...");
 await compileBlockTemplates({
   blocksDir: join(cwd, config.blocksDir),
   genDir: join(cwd, config.blocksDir, "gen"),
+  typed: config.typedTemplates,
 });
 
 console.log("✅ Done!");

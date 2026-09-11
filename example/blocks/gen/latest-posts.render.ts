@@ -1,22 +1,27 @@
 // Auto-generated - DO NOT EDIT
-import { escapeHtml, escapeAttr, renderSlot, type RenderBlockInput } from "@vojtaholik/static-kit-core";
-import { encodeSchemaAddress } from "@vojtaholik/static-kit-core";
+import { escapeHtml, escapeAttr, renderSlot, assetUrl, type TypedRenderInput } from "@vojtaholik/static-kit-core";
+import { encodeSchemaAddress, registerBlockAssets, blockAssetMarker } from "@vojtaholik/static-kit-core";
+import type { LatestPostsProps } from "../latest-posts.block.ts";
 
-export function renderLatestPosts(input: RenderBlockInput): string {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { props, ctx, addr } = input as { props: any; ctx: typeof input.ctx; addr: typeof input.addr };
+export function renderLatestPosts(input: TypedRenderInput<LatestPostsProps>): string {
+  const { props, ctx, addr } = input;
+  const asset = (path: string) => assetUrl(ctx, path);
   let out = "";
   out += "<section";
   out += " class=\"";
   out += "section section--latest-posts section--tone-";
   out += escapeAttr(ctx.layout.tone);
   out += "\"";
-  out += " data-block-id=\"";
-  out += escapeAttr(addr.blockId);
-  out += "\"";
-  out += " data-schema-address=\"";
-  out += escapeAttr(encodeSchemaAddress(addr));
-  out += "\"";
+  if (ctx.isDev) {
+    out += " data-block-id=\"";
+    out += escapeAttr(addr.blockId);
+    out += "\"";
+    }
+  if (ctx.isDev) {
+    out += " data-schema-address=\"";
+    out += escapeAttr(encodeSchemaAddress(addr));
+    out += "\"";
+    }
   out += ">";
   out += "<div";
   out += " class=\"";
@@ -48,7 +53,7 @@ export function renderLatestPosts(input: RenderBlockInput): string {
   out += "<div";
   out += " class=\"grid grid--3\"";
   out += ">";
-  for (const [i, post] of (props.posts).entries()) {
+  for (const [i, post] of ((props.posts) ?? []).entries()) {
     out += "<article";
     out += " class=\"card card--post\"";
     out += ">";
@@ -58,13 +63,17 @@ export function renderLatestPosts(input: RenderBlockInput): string {
       out += ">";
       out += "<img";
       out += " loading=\"lazy\"";
-      const _srcVal = post.image.src;
-      if (_srcVal) {
-        out += " src=\"" + escapeAttr(_srcVal) + "\"";
+      {
+        const _srcVal: unknown = post.image.src;
+        if (_srcVal != null && _srcVal !== false) {
+          out += " src=\"" + escapeAttr(_srcVal) + "\"";
+        }
       }
-      const _altVal = post.image.alt;
-      if (_altVal) {
-        out += " alt=\"" + escapeAttr(_altVal) + "\"";
+      {
+        const _altVal: unknown = post.image.alt;
+        if (_altVal != null && _altVal !== false) {
+          out += " alt=\"" + escapeAttr(_altVal) + "\"";
+        }
       }
       out += ">";
       out += "</div>";
@@ -93,9 +102,11 @@ export function renderLatestPosts(input: RenderBlockInput): string {
     }
     out += "<a";
     out += " class=\"card__link\"";
-    const _hrefVal = post.link.href;
-    if (_hrefVal) {
-      out += " href=\"" + escapeAttr(_hrefVal) + "\"";
+    {
+      const _hrefVal: unknown = post.link.href;
+      if (_hrefVal != null && _hrefVal !== false) {
+        out += " href=\"" + escapeAttr(_hrefVal) + "\"";
+      }
     }
     out += ">";
     out += escapeHtml(post.link.label);
@@ -110,9 +121,11 @@ export function renderLatestPosts(input: RenderBlockInput): string {
     out += ">";
     out += "<a";
     out += " class=\"btn btn--secondary\"";
-    const _hrefVal = props.viewAllLink.href;
-    if (_hrefVal) {
-      out += " href=\"" + escapeAttr(_hrefVal) + "\"";
+    {
+      const _hrefVal: unknown = props.viewAllLink.href;
+      if (_hrefVal != null && _hrefVal !== false) {
+        out += " href=\"" + escapeAttr(_hrefVal) + "\"";
+      }
     }
     out += ">";
     out += escapeHtml(props.viewAllLink.label);

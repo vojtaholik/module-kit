@@ -1,0 +1,34 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.12/schema.json",
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "files": {
+    "includes": [
+      "packages/**/*.ts",
+      "example/**/*.ts",
+      "scripts/**/*.ts",
+      "static-kit.config.ts",
+      "biome.json",
+      "!**/gen",
+      "!**/dist",
+      "!packages/cli/src/client",
+      "!packages/cli/test/fixtures"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "javascript": {
+    "formatter": { "quoteStyle": "double", "trailingCommas": "es5" }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "suspicious": { "noExplicitAny": "off" },
+      "style": { "noNonNullAssertion": "off", "useTemplate": "off" }
+    }
+  }
+}

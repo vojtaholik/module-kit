@@ -1,4 +1,4 @@
-import { describe, test, expect } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import { compileTemplate } from "../src/template-compiler.ts";
 
 describe("Template Compiler", () => {
@@ -118,8 +118,7 @@ describe("Template Compiler", () => {
     });
 
     test("compiles v-if on template element", () => {
-      const template =
-        '<template v-if="props.show"><div>a</div><div>b</div></template>';
+      const template = '<template v-if="props.show"><div>a</div><div>b</div></template>';
       const result = compileTemplate(template, "test-block");
 
       expect(result).toContain("if (props.show)");
@@ -138,8 +137,7 @@ describe("Template Compiler", () => {
     });
 
     test("compiles nested v-if", () => {
-      const template =
-        '<div v-if="props.outer"><span v-if="props.inner">text</span></div>';
+      const template = '<div v-if="props.outer"><span v-if="props.inner">text</span></div>';
       const result = compileTemplate(template, "test-block");
 
       expect(result).toContain("if (props.outer)");
@@ -160,7 +158,7 @@ describe("Template Compiler", () => {
       const template = '<div v-for="item in props.items">{{ item.name }}</div>';
       const result = compileTemplate(template, "test-block");
 
-      expect(result).toContain("for (const [_i, item] of (props.items).entries())");
+      expect(result).toContain("for (const [_i, item] of ((props.items) ?? []).entries())");
       expect(result).toContain("escapeHtml(item.name)");
     });
 
@@ -168,7 +166,7 @@ describe("Template Compiler", () => {
       const template = '<div v-for="item, i in props.items">{{ i }}</div>';
       const result = compileTemplate(template, "test-block");
 
-      expect(result).toContain("for (const [i, item] of (props.items).entries())");
+      expect(result).toContain("for (const [i, item] of ((props.items) ?? []).entries())");
       expect(result).toContain("escapeHtml(i)");
     });
 
@@ -176,15 +174,14 @@ describe("Template Compiler", () => {
       const template = '<div v-for="(item, i) in props.items">{{ i }}</div>';
       const result = compileTemplate(template, "test-block");
 
-      expect(result).toContain("for (const [i, item] of (props.items).entries())");
+      expect(result).toContain("for (const [i, item] of ((props.items) ?? []).entries())");
     });
 
     test("compiles v-for on template element", () => {
-      const template =
-        '<template v-for="item in props.items"><div>{{ item }}</div></template>';
+      const template = '<template v-for="item in props.items"><div>{{ item }}</div></template>';
       const result = compileTemplate(template, "test-block");
 
-      expect(result).toContain("for (const [_i, item] of (props.items).entries())");
+      expect(result).toContain("for (const [_i, item] of ((props.items) ?? []).entries())");
       expect(result).not.toContain("<template");
     });
 
@@ -209,10 +206,8 @@ describe("Template Compiler", () => {
         '<div v-for="group in props.groups"><span v-for="item in group.items">{{ item }}</span></div>';
       const result = compileTemplate(template, "test-block");
 
-      expect(result).toContain("for (const [_i, group] of (props.groups).entries())");
-      expect(result).toContain(
-        "for (const [_i, item] of (group.items).entries())"
-      );
+      expect(result).toContain("for (const [_i, group] of ((props.groups) ?? []).entries())");
+      expect(result).toContain("for (const [_i, item] of ((group.items) ?? []).entries())");
     });
 
     test("v-for with complex array expression", () => {
@@ -221,7 +216,7 @@ describe("Template Compiler", () => {
       const result = compileTemplate(template, "test-block");
 
       expect(result).toContain(
-        "for (const [_i, item] of (props.items.filter(x => x.active)).entries())"
+        "for (const [_i, item] of ((props.items.filter(x => x.active)) ?? []).entries())"
       );
     });
   });
@@ -231,7 +226,7 @@ describe("Template Compiler", () => {
       const template = '<a :href="props.url">link</a>';
       const result = compileTemplate(template, "test-block");
 
-      expect(result).toContain("const _hrefVal = props.url");
+      expect(result).toContain("const _hrefVal: unknown = props.url");
       expect(result).toContain("escapeAttr(_hrefVal)");
     });
 
@@ -239,15 +234,15 @@ describe("Template Compiler", () => {
       const template = '<a :href="props.url" :title="props.title">link</a>';
       const result = compileTemplate(template, "test-block");
 
-      expect(result).toContain("const _hrefVal = props.url");
-      expect(result).toContain("const _titleVal = props.title");
+      expect(result).toContain("const _hrefVal: unknown = props.url");
+      expect(result).toContain("const _titleVal: unknown = props.title");
     });
 
     test("compiles :class binding", () => {
       const template = '<div :class="props.className">content</div>';
       const result = compileTemplate(template, "test-block");
 
-      expect(result).toContain("const _classVal = props.className");
+      expect(result).toContain("const _classVal: unknown = props.className");
       expect(result).toContain("escapeAttr(_classVal)");
     });
 
@@ -256,7 +251,7 @@ describe("Template Compiler", () => {
       const result = compileTemplate(template, "test-block");
 
       expect(result).toContain('href=\\"/static\\"');
-      expect(result).toContain("const _titleVal = props.title");
+      expect(result).toContain("const _titleVal: unknown = props.title");
     });
 
     test("strips :key framework directive", () => {
@@ -271,8 +266,8 @@ describe("Template Compiler", () => {
       const template = '<input :disabled="props.isDisabled" />';
       const result = compileTemplate(template, "test-block");
 
-      expect(result).toContain("const _disabledVal = props.isDisabled");
-      expect(result).toContain("if (_disabledVal)");
+      expect(result).toContain("const _disabledVal: unknown = props.isDisabled");
+      expect(result).toContain("if (_disabledVal != null && _disabledVal !== false)");
     });
 
     test("compiles attribute with interpolation", () => {
@@ -288,7 +283,7 @@ describe("Template Compiler", () => {
       const template = '<div :data-id="props.id">content</div>';
       const result = compileTemplate(template, "test-block");
 
-      expect(result).toContain("_data_idVal = props.id");
+      expect(result).toContain("_data_idVal: unknown = props.id");
       expect(result).toContain("escapeAttr(_data_idVal)");
     });
   });
@@ -304,8 +299,7 @@ describe("Template Compiler", () => {
     });
 
     test("compiles render-slot with :index", () => {
-      const template =
-        '<render-slot :block="item.type" :props="item" :index="i" />';
+      const template = '<render-slot :block="item.type" :props="item" :index="i" />';
       const result = compileTemplate(template, "test-block");
 
       expect(result).toContain("renderSlot");
@@ -425,8 +419,7 @@ describe("Template Compiler", () => {
     });
 
     test("handles deeply nested elements", () => {
-      const template =
-        "<div><section><article><p><span>deep</span></p></article></section></div>";
+      const template = "<div><section><article><p><span>deep</span></p></article></section></div>";
       const result = compileTemplate(template, "test-block");
 
       expect(result).toContain('out += "<div"');
@@ -445,7 +438,7 @@ describe("Template Compiler", () => {
 
       expect(result).toContain("export function renderTestBlock(");
       expect(result).toContain("import { escapeHtml");
-      expect(result).toContain("let out = \"\"");
+      expect(result).toContain('let out = ""');
       expect(result).toContain("return out;");
     });
 
@@ -468,9 +461,11 @@ describe("Template Compiler", () => {
       const result = compileTemplate(template, "test-block");
 
       expect(result).toContain(
-        'import { escapeHtml, escapeAttr, renderSlot, type RenderBlockInput }'
+        "import { escapeHtml, escapeAttr, renderSlot, assetUrl, type TypedRenderInput }"
       );
-      expect(result).toContain("import { encodeSchemaAddress }");
+      expect(result).toContain(
+        "import { encodeSchemaAddress, registerBlockAssets, blockAssetMarker }"
+      );
     });
 
     test("uses custom core import path", () => {
@@ -500,7 +495,7 @@ describe("Template Compiler", () => {
       const template = "<div>test</div>";
       const result = compileTemplate(template, "test-block");
 
-      expect(result).toContain("(input: RenderBlockInput)");
+      expect(result).toContain("(input: TypedRenderInput<any>)");
     });
 
     test("includes eslint disable comment for any type", () => {
@@ -557,7 +552,7 @@ describe("Template Compiler", () => {
       const result = compileTemplate(template, "test-block");
 
       expect(result).toContain("if (props.show)");
-      expect(result).toContain("_classVal = props.className");
+      expect(result).toContain("_classVal: unknown = props.className");
       expect(result).toContain('id=\\"test\\"');
       expect(result).toContain("escapeHtml(props.title)");
     });
@@ -596,7 +591,7 @@ describe("Template Compiler", () => {
     });
 
     test("handles single quote in attribute", () => {
-      const template = "<div title=\"it's great\">content</div>";
+      const template = '<div title="it\'s great">content</div>';
       const result = compileTemplate(template, "test-block");
 
       // Single quotes are not escaped in string literals
@@ -609,5 +604,193 @@ describe("Template Compiler", () => {
 
       expect(result).toContain("Hello 世界 🌍");
     });
+  });
+});
+
+describe("Template Compiler regressions", () => {
+  test("sibling elements can bind the same attribute name", () => {
+    const template = '<div><a :href="props.a">x</a><a :href="props.b">y</a></div>';
+    const result = compileTemplate(template, "test-block");
+
+    // Each binding is block-scoped so the generated module is valid JS
+    expect(result.match(/const _hrefVal: unknown =/g)?.length).toBe(2);
+    const js = new Bun.Transpiler({ loader: "ts" }).transformSync(
+      result.replace(/^import[^\n]*\n/gm, "").replace("export ", "")
+    );
+    expect(() => new Function(js)).not.toThrow();
+  });
+
+  test("v-if on a v-for element applies per iteration", () => {
+    const template = '<li v-for="it in props.items" v-if="it.show">{{ it.name }}</li>';
+    const result = compileTemplate(template, "test-block");
+
+    expect(result).toContain("for (const [_i, it]");
+    expect(result).toContain("if (it.show)");
+    expect(result).not.toContain("v-if");
+  });
+
+  test("v-if on a v-for template applies per iteration", () => {
+    const template =
+      '<template v-for="it in props.items" v-if="it.show"><b>{{ it.name }}</b></template>';
+    const result = compileTemplate(template, "test-block");
+
+    expect(result).toContain("if (it.show)");
+    expect(result).toContain('out += "<b"');
+  });
+
+  test("dynamic attributes omit only null/undefined/false", () => {
+    const template = '<input :value="props.n">';
+    const result = compileTemplate(template, "test-block");
+
+    expect(result).toContain("if (_valueVal != null && _valueVal !== false)");
+  });
+
+  test("merges static class with :class", () => {
+    const template = '<div class="card" :class="props.extra">x</div>';
+    const result = compileTemplate(template, "test-block");
+
+    expect(result.match(/ class=/g)?.length).toBe(1);
+    expect(result).toContain('" class=\\"" + "card" + (_classVal');
+  });
+
+  test("merges interpolated static class with :class", () => {
+    const template = '<div class="card card--{{ props.kind }}" :class="props.extra">x</div>';
+    const result = compileTemplate(template, "test-block");
+
+    expect(result).toContain('"card card--" + escapeAttr(props.kind)');
+  });
+
+  test("render-slot fallback keeps the word 'out' intact", () => {
+    const template =
+      '<render-slot :block="props.b" :props="props.p">{{ props.out }} out of stock</render-slot>';
+    const result = compileTemplate(template, "test-block");
+
+    expect(result).toContain("_slot += escapeHtml(props.out)");
+    expect(result).toContain('_slot += " out of stock"');
+    expect(result).not.toContain("props._slot");
+  });
+});
+
+describe("v-else / v-else-if", () => {
+  test("compiles a full chain into if / else if / else", () => {
+    const template = `
+      <p v-if="props.a">A</p>
+      <p v-else-if="props.b">B</p>
+      <p v-else>C</p>`;
+    const result = compileTemplate(template, "test-block");
+
+    expect(result).toContain("if (props.a) {");
+    expect(result).toContain("} else if (props.b) {");
+    expect(result).toContain("} else {");
+    expect(result).not.toContain("v-else");
+    expect(result.match(/out \+= "<p"/g)?.length).toBe(3);
+  });
+
+  test("comments between branches don't break the chain", () => {
+    const template = `<p v-if="props.a">A</p><!-- note --><p v-else>C</p>`;
+    const result = compileTemplate(template, "test-block");
+    expect(result).toContain("} else {");
+  });
+
+  test("works on <template> elements", () => {
+    const template = `<template v-if="props.a"><b>A</b></template><template v-else><i>C</i></template>`;
+    const result = compileTemplate(template, "test-block");
+    expect(result).toContain("} else {");
+    expect(result).toContain('out += "<i"');
+  });
+
+  test("chain nested inside v-for", () => {
+    const template = `<template v-for="it in props.items"><b v-if="it.x">x</b><i v-else>y</i></template>`;
+    const result = compileTemplate(template, "test-block");
+    expect(result).toContain("for (const [_i, it]");
+    expect(result).toContain("} else {");
+  });
+
+  test("text between branches ends the chain and orphans the v-else", () => {
+    const template = `<p v-if="props.a">A</p>hello<p v-else>C</p>`;
+    expect(() => compileTemplate(template, "test-block")).toThrow(/no preceding v-if/);
+  });
+
+  test("throws on v-else without v-if", () => {
+    expect(() => compileTemplate(`<p v-else>C</p>`, "test-block")).toThrow(/no preceding v-if/);
+  });
+
+  test("throws on v-else combined with v-for", () => {
+    const template = `<p v-if="props.a">A</p><p v-for="x in props.xs" v-else>C</p>`;
+    expect(() => compileTemplate(template, "test-block")).toThrow(/cannot be combined with v-for/);
+  });
+});
+
+describe("typed templates", () => {
+  test("imports the props type and types the input", () => {
+    const result = compileTemplate(
+      "<h1>{{ props.title }}</h1>",
+      "hero",
+      "@vojtaholik/static-kit-core",
+      {
+        propsType: { name: "HeroProps", from: "../hero.block.ts" },
+      }
+    );
+    expect(result).toContain('import type { HeroProps } from "../hero.block.ts";');
+    expect(result).toContain("(input: TypedRenderInput<HeroProps>)");
+    expect(result).not.toContain("no-explicit-any");
+  });
+
+  test("falls back to any without a props type", () => {
+    const result = compileTemplate("<h1>{{ props.title }}</h1>", "hero");
+    expect(result).toContain("(input: TypedRenderInput<any>)");
+  });
+});
+
+describe("dev-only attributes", () => {
+  test("data-block-id and data-schema-address are emitted only in dev", () => {
+    const template =
+      '<section data-block-id="{{ addr.blockId }}" data-schema-address="{{ encodeSchemaAddress(addr) }}" :data-block-id="addr.blockId" id="x">y</section>';
+    const result = compileTemplate(template, "test-block");
+
+    expect(result.match(/if \(ctx\.isDev\) \{/g)?.length).toBe(3);
+    // Regular attributes stay unconditional
+    expect(result).toContain('out += " id=\\"x\\"";');
+    expect(result).not.toMatch(/if \(ctx\.isDev\) \{\n\s+out \+= " id=/);
+  });
+});
+
+describe("asset helper", () => {
+  test("asset() is available inside templates", () => {
+    const result = compileTemplate("<img :src=\"asset('images/x.jpg')\">", "test-block");
+    expect(result).toContain("const asset = (path: string) => assetUrl(ctx, path);");
+    expect(result).toContain("asset('images/x.jpg')");
+  });
+});
+
+describe("hoisted block assets", () => {
+  test("top-level <style> and <script> are registered, not rendered inline", () => {
+    const template = `
+      <style>.hero { color: red; }</style>
+      <section class="hero">{{ props.title }}</section>
+      <script type="module">console.log("hero " + '<b>');</script>`;
+    const result = compileTemplate(template, "hero");
+
+    expect(result).toContain('registerBlockAssets("hero", {');
+    expect(result).toContain(JSON.stringify(["<style>.hero { color: red; }</style>"]));
+    expect(result).toContain(
+      JSON.stringify(['<script type="module">console.log("hero " + \'<b>\');</script>'])
+    );
+    expect(result).toContain('out += blockAssetMarker("hero");');
+    expect(result).not.toContain('out += "<style"');
+    expect(result).not.toContain('out += "<script"');
+  });
+
+  test("nested <style>/<script> stay inline", () => {
+    const template = `<div><script>inline()</script></div>`;
+    const result = compileTemplate(template, "test-block");
+    expect(result).not.toContain('registerBlockAssets("');
+    expect(result).toContain('out += "<script"');
+  });
+
+  test("no marker without assets", () => {
+    const result = compileTemplate(`<div>x</div>`, "test-block");
+    expect(result).not.toContain("blockAssetMarker(");
+    expect(result).not.toContain("registerBlockAssets(");
   });
 });

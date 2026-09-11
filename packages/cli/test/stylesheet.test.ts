@@ -1,16 +1,16 @@
-import { describe, expect, test, beforeAll, afterAll } from "bun:test";
-import { mkdtemp, mkdir, rm, utimes } from "node:fs/promises";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { mkdir, mkdtemp, rm, utimes } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
-  resolveStylesheet,
   compileStylesheet,
   compileStylesheetCached,
   invalidateStylesheetCache,
   isSassPartial,
   isSassSource,
-  toCssPath,
+  resolveStylesheet,
   sassHintIfDisabled,
+  toCssPath,
 } from "../src/stylesheet.ts";
 
 let publicDir: string;

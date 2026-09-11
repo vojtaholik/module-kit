@@ -1,5 +1,5 @@
-import { z } from "zod/v4";
 import { defineBlock } from "@vojtaholik/static-kit-core";
+import { z } from "zod/v4";
 import { renderCarousel } from "./gen/carousel.render.ts";
 
 const carouselItemSchema = z.object({

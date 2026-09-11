@@ -1,4 +1,4 @@
-import { z } from "zod/v4";
+import type { z } from "zod/v4";
 import type { LayoutProps } from "./layout.ts";
 import type { SchemaAddress } from "./schema-address.ts";
 
@@ -26,6 +26,26 @@ export interface RenderBlockInput<T extends z.ZodType = z.ZodType> {
   ctx: RenderContext;
   /** Schema address for CMS editing */
   addr: SchemaAddress;
+}
+
+/**
+ * Render input with a concrete props type — what generated render
+ * functions accept. Assignable from RenderBlockInput<T> when z.infer<T>
+ * matches P, so `defineBlock({ renderHtml: renderHero })` still type-checks.
+ */
+export interface TypedRenderInput<P> {
+  props: P;
+  ctx: RenderContext;
+  addr: SchemaAddress;
+}
+
+/**
+ * URL of a file under the public asset base (`ctx.assetBase`, normally the
+ * configured `publicPath`). Available in templates as `asset("images/x.jpg")`.
+ */
+export function assetUrl(ctx: Pick<RenderContext, "assetBase">, path: string): string {
+  const base = ctx.assetBase.replace(/\/+$/, "");
+  return `${base}/${path.replace(/^\/+/, "")}`;
 }
 
 /**
@@ -141,9 +161,7 @@ function formatSlotError(
     details,
   });
   // Hidden element that dev overlay will pick up
-  return `<script type="application/json" data-slot-error>${escapeHtml(
-    errorData
-  )}</script>`;
+  return `<script type="application/json" data-slot-error>${escapeHtml(errorData)}</script>`;
 }
 
 /**
@@ -171,24 +189,15 @@ export function renderSlot(
   if (!block) {
     const msg = `renderSlot: Unknown block type "${blockType}", using fallback`;
     console.warn(msg);
-    const errorHtml = ctx.isDev
-      ? formatSlotError("not-found", blockType, addr)
-      : "";
+    const errorHtml = ctx.isDev ? formatSlotError("not-found", blockType, addr) : "";
     return errorHtml + fallback();
   }
 
   const result = block.propsSchema.safeParse(slotProps);
   if (!result.success) {
-    const issues = result.error.issues
-      .map((i) => `${i.path.join(".")}: ${i.message}`)
-      .join("; ");
-    console.warn(
-      `renderSlot: Props validation failed for "${blockType}", using fallback:`,
-      issues
-    );
-    const errorHtml = ctx.isDev
-      ? formatSlotError("validation", blockType, addr, issues)
-      : "";
+    const issues = result.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ");
+    console.warn(`renderSlot: Props validation failed for "${blockType}", using fallback:`, issues);
+    const errorHtml = ctx.isDev ? formatSlotError("validation", blockType, addr, issues) : "";
     return errorHtml + fallback();
   }
 

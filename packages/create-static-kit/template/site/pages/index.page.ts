@@ -37,8 +37,7 @@ export const indexPage: PageConfig = {
           type: "featureGrid",
           props: {
             headline: "Why Static Kit?",
-            subheadline:
-              "Everything you need to build fast, maintainable static sites.",
+            subheadline: "Everything you need to build fast, maintainable static sites.",
             columns: "3",
             features: [
               {
@@ -62,20 +61,17 @@ export const indexPage: PageConfig = {
               {
                 icon: "📝",
                 title: "CMS Compatible",
-                description:
-                  "Export your content schemas for use with any headless CMS.",
+                description: "Export your content schemas for use with any headless CMS.",
               },
               {
                 icon: "🔧",
                 title: "Developer Experience",
-                description:
-                  "Hot reload, TypeScript everywhere, and a simple mental model.",
+                description: "Hot reload, TypeScript everywhere, and a simple mental model.",
               },
               {
                 icon: "🚀",
                 title: "Deploy Anywhere",
-                description:
-                  "Output is plain HTML/CSS/JS. Deploy to any static host.",
+                description: "Output is plain HTML/CSS/JS. Deploy to any static host.",
               },
             ],
           },

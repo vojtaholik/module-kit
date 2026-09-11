@@ -1,14 +1,13 @@
-import { describe, test, expect, beforeEach } from "bun:test";
+import { beforeEach, describe, expect, test } from "bun:test";
 import { z } from "zod/v4";
 import {
   BlockRegistry,
   blockRegistry,
   defineBlock,
-  escapeHtml,
   escapeAttr,
-  renderSlot,
-  type BlockDefinition,
+  escapeHtml,
   type RenderContext,
+  renderSlot,
 } from "../src/block-registry.ts";
 import type { SchemaAddress } from "../src/schema-address.ts";
 
@@ -417,13 +416,7 @@ describe("Block Registry", () => {
     });
 
     test("returns fallback when blockType is undefined", () => {
-      const result = renderSlot(
-        undefined,
-        {},
-        mockContext,
-        mockAddr,
-        () => "<div>fallback</div>"
-      );
+      const result = renderSlot(undefined, {}, mockContext, mockAddr, () => "<div>fallback</div>");
 
       expect(result).toBe("<div>fallback</div>");
     });
@@ -471,8 +464,8 @@ describe("Block Registry", () => {
         () => "<div>fallback</div>"
       );
 
-      expect(result).toContain('data-slot-error');
-      expect(result).toContain('<div>fallback</div>');
+      expect(result).toContain("data-slot-error");
+      expect(result).toContain("<div>fallback</div>");
     });
 
     test("no error marker in production mode for unknown block", () => {
@@ -484,7 +477,7 @@ describe("Block Registry", () => {
         () => "<div>fallback</div>"
       );
 
-      expect(result).not.toContain('data-slot-error');
+      expect(result).not.toContain("data-slot-error");
       expect(result).toBe("<div>fallback</div>");
     });
 
@@ -506,8 +499,8 @@ describe("Block Registry", () => {
         () => "<div>fallback</div>"
       );
 
-      expect(result).toContain('data-slot-error');
-      expect(result).toContain('&quot;type&quot;:&quot;validation&quot;');
+      expect(result).toContain("data-slot-error");
+      expect(result).toContain("&quot;type&quot;:&quot;validation&quot;");
     });
 
     test("passes correct context to block render function", () => {
@@ -559,13 +552,7 @@ describe("Block Registry", () => {
 
       blockRegistry.register(block);
 
-      const result = renderSlot(
-        "test",
-        { count: "5" },
-        mockContext,
-        mockAddr,
-        () => "fallback"
-      );
+      const result = renderSlot("test", { count: "5" }, mockContext, mockAddr, () => "fallback");
 
       expect(result).toBe("<div>10</div>");
     });
@@ -579,8 +566,7 @@ describe("Block Registry", () => {
             age: z.number(),
           }),
         }),
-        renderHtml: ({ props }) =>
-          `<div>${props.user.name} is ${props.user.age}</div>`,
+        renderHtml: ({ props }) => `<div>${props.user.name} is ${props.user.age}</div>`,
       });
 
       blockRegistry.register(block);
@@ -607,16 +593,10 @@ describe("Block Registry", () => {
 
       blockRegistry.register(block);
 
-      renderSlot(
-        "test",
-        {},
-        mockContext,
-        mockAddr,
-        () => {
-          fallbackCalled = true;
-          return "fallback";
-        }
-      );
+      renderSlot("test", {}, mockContext, mockAddr, () => {
+        fallbackCalled = true;
+        return "fallback";
+      });
 
       expect(fallbackCalled).toBe(false);
     });
@@ -624,16 +604,10 @@ describe("Block Registry", () => {
     test("fallback function is called for unknown block", () => {
       let fallbackCalled = false;
 
-      renderSlot(
-        "unknown",
-        {},
-        mockContext,
-        mockAddr,
-        () => {
-          fallbackCalled = true;
-          return "fallback";
-        }
-      );
+      renderSlot("unknown", {}, mockContext, mockAddr, () => {
+        fallbackCalled = true;
+        return "fallback";
+      });
 
       expect(fallbackCalled).toBe(true);
     });

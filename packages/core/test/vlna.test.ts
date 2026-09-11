@@ -1,5 +1,5 @@
-import { describe, test, expect } from "bun:test";
-import { vlna, vlnaHtml, preventWidow } from "../src/vlna.ts";
+import { describe, expect, test } from "bun:test";
+import { preventWidow, vlna, vlnaHtml } from "../src/vlna.ts";
 
 describe("vlna", () => {
   describe("plain text", () => {
@@ -94,9 +94,7 @@ describe("vlna", () => {
 
   describe("preventWidow", () => {
     test("adds nbsp before last word", () => {
-      expect(preventWidow("Tohle je věta se slovem")).toBe(
-        "Tohle je věta se\u00A0slovem"
-      );
+      expect(preventWidow("Tohle je věta se slovem")).toBe("Tohle je věta se\u00A0slovem");
     });
 
     test("skips words longer than 15 chars", () => {
@@ -116,21 +114,15 @@ describe("vlna", () => {
 
   describe("vlnaHtml", () => {
     test("transforms text between tags", () => {
-      expect(vlnaHtml("<p>Šel jsem v neděli</p>")).toBe(
-        "<p>Šel jsem v\u00A0neděli</p>"
-      );
+      expect(vlnaHtml("<p>Šel jsem v neděli</p>")).toBe("<p>Šel jsem v\u00A0neděli</p>");
     });
 
     test("does not transform HTML attributes", () => {
-      expect(vlnaHtml('<a href="v neděli">text</a>')).toBe(
-        '<a href="v neděli">text</a>'
-      );
+      expect(vlnaHtml('<a href="v neděli">text</a>')).toBe('<a href="v neděli">text</a>');
     });
 
     test("skips <script> content", () => {
-      expect(vlnaHtml("<script>var v = 1;</script>")).toBe(
-        "<script>var v = 1;</script>"
-      );
+      expect(vlnaHtml("<script>var v = 1;</script>")).toBe("<script>var v = 1;</script>");
     });
 
     test("skips <style> content", () => {
@@ -140,20 +132,15 @@ describe("vlna", () => {
     });
 
     test("skips <code> content", () => {
-      expect(vlnaHtml("<code>v neděli</code>")).toBe(
-        "<code>v neděli</code>"
-      );
+      expect(vlnaHtml("<code>v neděli</code>")).toBe("<code>v neděli</code>");
     });
 
     test("skips <pre> content", () => {
-      expect(vlnaHtml("<pre>v neděli</pre>")).toBe(
-        "<pre>v neděli</pre>"
-      );
+      expect(vlnaHtml("<pre>v neděli</pre>")).toBe("<pre>v neděli</pre>");
     });
 
     test("transforms text outside skip tags", () => {
-      const input =
-        "<p>Šel v lese daleko</p><code>v kódu</code><p>Byl s přítelem včera</p>";
+      const input = "<p>Šel v lese daleko</p><code>v kódu</code><p>Byl s přítelem včera</p>";
       const result = vlnaHtml(input);
       expect(result).toContain("v\u00A0lese");
       expect(result).toContain("s\u00A0přítelem");
@@ -179,21 +166,19 @@ describe("vlna", () => {
     });
 
     test("prevents widow with Bez at line start", () => {
-      expect(
-        vlnaHtml("<p>Bez zbytečných látek navíc</p>")
-      ).toBe("<p>Bez\u00A0zbytečných látek\u00A0navíc</p>");
+      expect(vlnaHtml("<p>Bez zbytečných látek navíc</p>")).toBe(
+        "<p>Bez\u00A0zbytečných látek\u00A0navíc</p>"
+      );
     });
 
     test("preserves space before inline tags (no widow prevention mid-paragraph)", () => {
-      expect(
-        vlnaHtml("<p>filtraci vody <strong>FILTIQ</strong> jsme vyvinuli</p>")
-      ).toContain("vody <strong>FILTIQ</strong>");
+      expect(vlnaHtml("<p>filtraci vody <strong>FILTIQ</strong> jsme vyvinuli</p>")).toContain(
+        "vody <strong>FILTIQ</strong>"
+      );
     });
 
     test("handles nested skip tags", () => {
-      expect(vlnaHtml("<pre><code>v neděli</code></pre>")).toBe(
-        "<pre><code>v neděli</code></pre>"
-      );
+      expect(vlnaHtml("<pre><code>v neděli</code></pre>")).toBe("<pre><code>v neděli</code></pre>");
     });
 
     test("handles full HTML document", () => {

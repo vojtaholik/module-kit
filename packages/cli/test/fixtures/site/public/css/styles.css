@@ -1,0 +1,4 @@
+.hero {
+  color: blue;
+  & h1 { margin: 0; }
+}

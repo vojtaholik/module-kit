@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * Static Block Kit CLI
+ * Static Kit CLI
  *
  * Commands:
  *   dev    - Start development server
@@ -28,10 +28,10 @@ switch (command) {
   case "-h":
   case undefined:
     console.log(`
-Static Block Kit CLI
+Static Kit CLI
 
 Usage:
-  static-block-kit <command>
+  static-kit <command>
 
 Commands:
   dev     Start development server with hot reload
@@ -45,6 +45,6 @@ Options:
     break;
   default:
     console.error(`Unknown command: ${command}`);
-    console.error("Run 'static-block-kit --help' for available commands");
+    console.error("Run 'static-kit --help' for available commands");
     process.exit(1);
 }

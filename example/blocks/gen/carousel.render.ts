@@ -1,22 +1,27 @@
 // Auto-generated - DO NOT EDIT
-import { escapeHtml, escapeAttr, renderSlot, type RenderBlockInput } from "@vojtaholik/static-kit-core";
-import { encodeSchemaAddress } from "@vojtaholik/static-kit-core";
+import { escapeHtml, escapeAttr, renderSlot, assetUrl, type TypedRenderInput } from "@vojtaholik/static-kit-core";
+import { encodeSchemaAddress, registerBlockAssets, blockAssetMarker } from "@vojtaholik/static-kit-core";
+import type { CarouselProps } from "../carousel.block.ts";
 
-export function renderCarousel(input: RenderBlockInput): string {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { props, ctx, addr } = input as { props: any; ctx: typeof input.ctx; addr: typeof input.addr };
+export function renderCarousel(input: TypedRenderInput<CarouselProps>): string {
+  const { props, ctx, addr } = input;
+  const asset = (path: string) => assetUrl(ctx, path);
   let out = "";
   out += "<section";
   out += " class=\"";
   out += "section section--carousel section--tone-";
   out += escapeAttr(ctx.layout.tone);
   out += "\"";
-  out += " data-block-id=\"";
-  out += escapeAttr(addr.blockId);
-  out += "\"";
-  out += " data-schema-address=\"";
-  out += escapeAttr(encodeSchemaAddress(addr));
-  out += "\"";
+  if (ctx.isDev) {
+    out += " data-block-id=\"";
+    out += escapeAttr(addr.blockId);
+    out += "\"";
+    }
+  if (ctx.isDev) {
+    out += " data-schema-address=\"";
+    out += escapeAttr(encodeSchemaAddress(addr));
+    out += "\"";
+    }
   out += ">";
   out += "<div";
   out += " class=\"container container--wide\"";
@@ -37,7 +42,12 @@ export function renderCarousel(input: RenderBlockInput): string {
   out += " aria-hidden=\"true\"";
   out += ">";
   out += "<use";
-  out += " href=\"public/sprite.svg#arrow-left\"";
+  {
+    const _hrefVal: unknown = asset('sprite.svg') + '#arrow-left';
+    if (_hrefVal != null && _hrefVal !== false) {
+      out += " href=\"" + escapeAttr(_hrefVal) + "\"";
+    }
+  }
   out += ">";
   out += "</use>";
   out += "</svg>";
@@ -55,7 +65,12 @@ export function renderCarousel(input: RenderBlockInput): string {
   out += " aria-hidden=\"true\"";
   out += ">";
   out += "<use";
-  out += " href=\"public/sprite.svg#arrow-right\"";
+  {
+    const _hrefVal: unknown = asset('sprite.svg') + '#arrow-right';
+    if (_hrefVal != null && _hrefVal !== false) {
+      out += " href=\"" + escapeAttr(_hrefVal) + "\"";
+    }
+  }
   out += ">";
   out += "</use>";
   out += "</svg>";
@@ -63,20 +78,26 @@ export function renderCarousel(input: RenderBlockInput): string {
   out += "</div>";
   out += "<div";
   out += " data-carousel=\"\"";
-  const _classVal = 'carousel carousel--' + props.variant;
-  if (_classVal) {
-    out += " class=\"" + escapeAttr(_classVal) + "\"";
+  {
+    const _classVal: unknown = 'carousel carousel--' + props.variant;
+    if (_classVal != null && _classVal !== false) {
+      out += " class=\"" + escapeAttr(_classVal) + "\"";
+    }
   }
   out += ">";
-  for (const [_i, item] of (props.items).entries()) {
+  for (const [_i, item] of ((props.items) ?? []).entries()) {
     out += "<a";
-    const _hrefVal = item.href || '#';
-    if (_hrefVal) {
-      out += " href=\"" + escapeAttr(_hrefVal) + "\"";
+    {
+      const _hrefVal: unknown = item.href || '#';
+      if (_hrefVal != null && _hrefVal !== false) {
+        out += " href=\"" + escapeAttr(_hrefVal) + "\"";
+      }
     }
-    const _classVal = 'carousel__card carousel__card--' + props.variant;
-    if (_classVal) {
-      out += " class=\"" + escapeAttr(_classVal) + "\"";
+    {
+      const _classVal: unknown = 'carousel__card carousel__card--' + props.variant;
+      if (_classVal != null && _classVal !== false) {
+        out += " class=\"" + escapeAttr(_classVal) + "\"";
+      }
     }
     out += ">";
     out += "<div";
@@ -84,13 +105,17 @@ export function renderCarousel(input: RenderBlockInput): string {
     out += ">";
     out += "<img";
     out += " loading=\"lazy\"";
-    const _srcVal = item.image.src;
-    if (_srcVal) {
-      out += " src=\"" + escapeAttr(_srcVal) + "\"";
+    {
+      const _srcVal: unknown = item.image.src;
+      if (_srcVal != null && _srcVal !== false) {
+        out += " src=\"" + escapeAttr(_srcVal) + "\"";
+      }
     }
-    const _altVal = item.image.alt;
-    if (_altVal) {
-      out += " alt=\"" + escapeAttr(_altVal) + "\"";
+    {
+      const _altVal: unknown = item.image.alt;
+      if (_altVal != null && _altVal !== false) {
+        out += " alt=\"" + escapeAttr(_altVal) + "\"";
+      }
     }
     out += ">";
     out += "</div>";

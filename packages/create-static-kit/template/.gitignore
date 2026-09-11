@@ -1,5 +1,5 @@
 node_modules/
 dist/
-src/blocks/gen/
+blocks/gen/
 bun.lockb
 .DS_Store

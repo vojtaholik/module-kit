@@ -1,10 +1,6 @@
-import { describe, test, expect, beforeEach } from "bun:test";
+import { beforeEach, describe, expect, test } from "bun:test";
 import { z } from "zod/v4";
-import {
-  renderPage,
-  renderBlock,
-  type RenderPageOptions,
-} from "../src/html-renderer.ts";
+import { type RenderPageOptions, renderBlock, renderPage } from "../src/html-renderer.ts";
 
 // Tests use arbitrary block types/props for runtime testing.
 // Loose aliases avoid conflicts with user-land BlockPropsMap augmentation.
@@ -14,7 +10,17 @@ type TestPageConfig = {
   title: string;
   template: string;
   density?: "compact" | "comfortable" | "relaxed";
-  regions: Record<string, { blocks: Array<{ id: string; type: string; props: Record<string, unknown>; layout?: Record<string, unknown> }> }>;
+  regions: Record<
+    string,
+    {
+      blocks: Array<{
+        id: string;
+        type: string;
+        props: Record<string, unknown>;
+        layout?: Record<string, unknown>;
+      }>;
+    }
+  >;
   meta?: Record<string, string>;
 };
 type TestBlockInstance = {
@@ -23,11 +29,9 @@ type TestBlockInstance = {
   props: Record<string, unknown>;
   layout?: Record<string, unknown>;
 };
-import {
-  blockRegistry,
-  defineBlock,
-  type RenderBlockInput,
-} from "../src/block-registry.ts";
+
+import { blockAssetMarker, clearBlockAssets, registerBlockAssets } from "../src/block-assets.ts";
+import { blockRegistry, defineBlock } from "../src/block-registry.ts";
 
 describe("HTML Renderer", () => {
   beforeEach(() => {
@@ -66,7 +70,7 @@ describe("HTML Renderer", () => {
       const html = await renderPage(page, options);
 
       expect(html).toContain("<title>Test Page Title</title>");
-      expect(html).not.toContain('data-page-id');
+      expect(html).not.toContain("data-page-id");
     });
 
     test("renders page with single block in region", async () => {
@@ -237,7 +241,7 @@ describe("HTML Renderer", () => {
 
       const html = await renderPage(page, options);
 
-      expect(html).not.toContain('data-region');
+      expect(html).not.toContain("data-region");
       expect(html).not.toContain("undefined");
     });
 
@@ -257,9 +261,7 @@ describe("HTML Renderer", () => {
         template: "base.html",
         regions: {
           main: {
-            blocks: [
-              { id: "unknown-1", type: "unknown-type", props: { test: "value" } },
-            ],
+            blocks: [{ id: "unknown-1", type: "unknown-type", props: { test: "value" } }],
           },
         },
       };
@@ -300,9 +302,7 @@ describe("HTML Renderer", () => {
         template: "base.html",
         regions: {
           main: {
-            blocks: [
-              { id: "block-1", type: "strict-block", props: { wrong: "prop" } },
-            ],
+            blocks: [{ id: "block-1", type: "strict-block", props: { wrong: "prop" } }],
           },
         },
       };
@@ -679,7 +679,7 @@ describe("HTML Renderer", () => {
           isDev: false,
           assetBase: "/",
         });
-      }).toThrow('Unknown block type: "unknown-type"');
+      }).toThrow('Unknown block type "unknown-type"');
     });
 
     test("throws on invalid props", () => {
@@ -839,5 +839,172 @@ describe("HTML Renderer", () => {
       expect(receivedContext.layout.density).toBe("comfortable");
       expect(receivedContext.layout.contentWidth).toBe("default");
     });
+  });
+});
+
+describe("HTML Renderer regressions", () => {
+  const page = {
+    id: "p",
+    path: "/",
+    title: "Page Title",
+    template: "base.html",
+    regions: { main: { blocks: [] } },
+  };
+
+  const render = (template: string, extra: Partial<RenderPageOptions> = {}) =>
+    renderPage(page, {
+      templateDir: "/t",
+      readFile: async () => template,
+      isDev: false,
+      ...extra,
+    });
+
+  test("fills an empty <title></title>", async () => {
+    const html = await render("<html><head><title></title></head><body></body></html>");
+    expect(html).toContain("<title>Page Title</title>");
+  });
+
+  test("vlna auto: applied for lang=cs", async () => {
+    const html = await render('<html lang="cs"><body><p>jdu k tobě</p></body></html>');
+    expect(html).toContain("k tobě");
+  });
+
+  test("vlna auto: skipped for lang=en", async () => {
+    const html = await render('<html lang="en"><body><p>I am a pro developer</p></body></html>');
+    expect(html).toContain("I am a pro developer");
+    expect(html).not.toContain(" ");
+  });
+
+  test("vlna auto: skipped when lang is missing", async () => {
+    const html = await render("<html><body><p>I am a pro</p></body></html>");
+    expect(html).not.toContain(" ");
+  });
+
+  test("vlna: true forces it on regardless of lang", async () => {
+    const html = await render('<html lang="en"><body><p>jdu k tobě</p></body></html>', {
+      vlna: true,
+    });
+    expect(html).toContain("k tobě");
+  });
+
+  test("vlna: false forces it off regardless of lang", async () => {
+    const html = await render('<html lang="cs"><body><p>jdu k tobě</p></body></html>', {
+      vlna: false,
+    });
+    expect(html).toContain("jdu k tobě");
+  });
+});
+
+describe("HTML Renderer features", () => {
+  const baseTemplate = `<!DOCTYPE html><html><head><title>t</title><meta name="description" content="old"></head><body><main data-region="main"></main></body></html>`;
+
+  const makePage = (
+    blocks: TestBlockInstance[],
+    extra: Partial<TestPageConfig> = {}
+  ): TestPageConfig => ({
+    id: "p",
+    path: "/",
+    title: "T",
+    template: "base.html",
+    regions: { main: { blocks } },
+    ...extra,
+  });
+
+  const render = (page: TestPageConfig, extra: Partial<RenderPageOptions> = {}) =>
+    renderPage(page as never, {
+      templateDir: "/t",
+      readFile: async () => baseTemplate,
+      isDev: false,
+      ...extra,
+    });
+
+  beforeEach(() => {
+    blockRegistry.clear();
+    clearBlockAssets();
+    blockRegistry.register(
+      defineBlock({
+        type: "hero",
+        propsSchema: z.object({ title: z.string() }),
+        renderHtml: ({ props }) =>
+          `${blockAssetMarker("hero")}<div class="hero">${props.title}</div>`,
+      })
+    );
+    registerBlockAssets("hero", {
+      styles: ['<style data-block="hero">.hero{}</style>'],
+      scripts: ['<script data-block="hero">hero()</script>'],
+    });
+  });
+
+  test("strict: false warns and skips a bad block", async () => {
+    const html = await render(
+      makePage([
+        { id: "a", type: "hero", props: { title: "ok" } },
+        { id: "b", type: "missing", props: {} },
+        { id: "c", type: "hero", props: { title: 42 } },
+      ])
+    );
+    expect(html).toContain('<div class="hero">ok</div>');
+  });
+
+  test("strict: true throws on unknown block type", async () => {
+    await expect(
+      render(makePage([{ id: "b", type: "missing", props: {} }]), { strict: true })
+    ).rejects.toThrow(/Unknown block type "missing" \(block "b" on page "p"\)/);
+  });
+
+  test("strict: true throws on invalid props", async () => {
+    await expect(
+      render(makePage([{ id: "c", type: "hero", props: { title: 42 } }]), { strict: true })
+    ).rejects.toThrow(/Invalid props for block "c" \(hero\) on page "p": title/);
+  });
+
+  test("duplicate block ids across regions throw", async () => {
+    const page = makePage([{ id: "dup", type: "hero", props: { title: "1" } }], {
+      regions: {
+        main: { blocks: [{ id: "dup", type: "hero", props: { title: "1" } }] },
+        aside: { blocks: [{ id: "dup", type: "hero", props: { title: "2" } }] },
+      },
+    });
+    await expect(render(page)).rejects.toThrow(
+      /Duplicate block id "dup" on page "p" \(regions "main" and "aside"\)/
+    );
+  });
+
+  test("block assets injected once per page, markers removed", async () => {
+    const html = await render(
+      makePage([
+        { id: "a", type: "hero", props: { title: "1" } },
+        { id: "b", type: "hero", props: { title: "2" } },
+      ])
+    );
+    expect(html).not.toContain("__sk-asset");
+    expect(html.match(/<style data-block="hero">/g)?.length).toBe(1);
+    expect(html.match(/<script data-block="hero">/g)?.length).toBe(1);
+    expect(html.indexOf("<style data-block")).toBeLessThan(html.indexOf("</head>"));
+    expect(html.indexOf("<script data-block")).toBeLessThan(html.indexOf("</body>"));
+    expect(html.indexOf("<script data-block")).toBeGreaterThan(html.indexOf('<div class="hero">2'));
+  });
+
+  test("page.meta adds and updates <meta> tags", async () => {
+    const html = await render(
+      makePage([], {
+        meta: { description: "new", "og:title": "OG", "twitter:card": "summary" },
+      })
+    );
+    expect(html).toContain('<meta name="description" content="new">');
+    expect(html.match(/name="description"/g)?.length).toBe(1);
+    expect(html).toContain('<meta property="og:title" content="OG">');
+    expect(html).toContain('<meta property="twitter:card" content="summary">');
+    expect(html.indexOf('property="og:title"')).toBeLessThan(html.indexOf("</head>"));
+  });
+
+  test("renderBlock strips asset markers", () => {
+    const html = renderBlock({ id: "a", type: "hero", props: { title: "x" } } as never, {
+      pageId: "p",
+      region: "r",
+      isDev: false,
+      assetBase: "/",
+    });
+    expect(html).toBe('<div class="hero">x</div>');
   });
 });

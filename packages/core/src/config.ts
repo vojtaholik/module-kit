@@ -16,6 +16,16 @@ export const configSchema = z.object({
   publicPath: z.string().default("/public"),
   /** Dev server port */
   devPort: z.number().default(3000),
+  /**
+   * Output layout for pages. false: `/about` → `dist/about.html`.
+   * true: `/about` → `dist/about/index.html` (for hosts without clean-URL rewrites).
+   */
+  trailingSlash: z.boolean().default(false),
+  /**
+   * Type generated render functions against `<Name>Props` exported from the
+   * block's `.block.ts`. Template typos become tsc errors.
+   */
+  typedTemplates: z.boolean().default(true),
   /** HTML output format: "formatted" (pretty-printed) or "minified" */
   htmlOutput: z.enum(["formatted", "minified"]).default("formatted"),
   /** CSS output format: "formatted" (as-is) or "minified" */
@@ -26,6 +36,12 @@ export const configSchema = z.object({
    * `sass-embedded` to be installed in the project.
    */
   scss: z.boolean().default(false),
+  /**
+   * Czech typography (vlna): non-breaking spaces after short prepositions and
+   * widow prevention. "auto" applies it when `<html lang>` is cs or sk;
+   * true/false force it on or off for every page.
+   */
+  vlna: z.union([z.boolean(), z.literal("auto")]).default("auto"),
   /** URL path prefix for production builds — all internal links get this prefix */
   basePath: z
     .string()
@@ -38,8 +54,6 @@ export type StaticKitConfig = z.infer<typeof configSchema>;
 /**
  * Define a Static Kit configuration with type-safe defaults
  */
-export function defineConfig(
-  config: z.input<typeof configSchema> = {}
-): StaticKitConfig {
+export function defineConfig(config: z.input<typeof configSchema> = {}): StaticKitConfig {
   return configSchema.parse(config);
 }

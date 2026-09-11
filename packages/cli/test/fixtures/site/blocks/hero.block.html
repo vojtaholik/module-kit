@@ -1,0 +1,8 @@
+<style>.hero { color: red; }</style>
+<section class="hero" data-block-id="{{ addr.blockId }}">
+  <h1>{{ props.title }}</h1>
+  <p v-if="props.subtitle">{{ props.subtitle }}</p>
+  <p v-else>no subtitle</p>
+  <img :src="asset('images/logo.png')" alt="">
+</section>
+<script>document.querySelector(".hero");</script>

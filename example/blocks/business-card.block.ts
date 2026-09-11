@@ -1,5 +1,5 @@
-import { z } from "zod/v4";
 import { defineBlock } from "@vojtaholik/static-kit-core";
+import { z } from "zod/v4";
 import { renderBusinessCard } from "./gen/business-card.render.ts";
 
 export const businessCardPropsSchema = z.object({

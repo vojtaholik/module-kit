@@ -1,22 +1,27 @@
 // Auto-generated - DO NOT EDIT
-import { escapeHtml, escapeAttr, renderSlot, type RenderBlockInput } from "@vojtaholik/static-kit-core";
-import { encodeSchemaAddress } from "@vojtaholik/static-kit-core";
+import { escapeHtml, escapeAttr, renderSlot, assetUrl, type TypedRenderInput } from "@vojtaholik/static-kit-core";
+import { encodeSchemaAddress, registerBlockAssets, blockAssetMarker } from "@vojtaholik/static-kit-core";
+import type { FeatureGridProps } from "../feature-grid.block.ts";
 
-export function renderFeatureGrid(input: RenderBlockInput): string {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { props, ctx, addr } = input as { props: any; ctx: typeof input.ctx; addr: typeof input.addr };
+export function renderFeatureGrid(input: TypedRenderInput<FeatureGridProps>): string {
+  const { props, ctx, addr } = input;
+  const asset = (path: string) => assetUrl(ctx, path);
   let out = "";
   out += "<section";
   out += " class=\"";
   out += "section section--feature-grid section--tone-";
   out += escapeAttr(ctx.layout.tone);
   out += "\"";
-  out += " data-block-id=\"";
-  out += escapeAttr(addr.blockId);
-  out += "\"";
-  out += " data-schema-address=\"";
-  out += escapeAttr(encodeSchemaAddress(addr));
-  out += "\"";
+  if (ctx.isDev) {
+    out += " data-block-id=\"";
+    out += escapeAttr(addr.blockId);
+    out += "\"";
+    }
+  if (ctx.isDev) {
+    out += " data-schema-address=\"";
+    out += escapeAttr(encodeSchemaAddress(addr));
+    out += "\"";
+    }
   out += ">";
   out += "<div";
   out += " class=\"";
@@ -53,7 +58,7 @@ export function renderFeatureGrid(input: RenderBlockInput): string {
   out += escapeAttr(props.columns || '3');
   out += "\"";
   out += ">";
-  for (const [i, feature] of (props.features).entries()) {
+  for (const [i, feature] of ((props.features) ?? []).entries()) {
     out += "<div";
     out += " class=\"card\"";
     out += ">";
@@ -77,9 +82,11 @@ export function renderFeatureGrid(input: RenderBlockInput): string {
     if (feature.link) {
       out += "<a";
       out += " class=\"card__link\"";
-      const _hrefVal = feature.link.href;
-      if (_hrefVal) {
-        out += " href=\"" + escapeAttr(_hrefVal) + "\"";
+      {
+        const _hrefVal: unknown = feature.link.href;
+        if (_hrefVal != null && _hrefVal !== false) {
+          out += " href=\"" + escapeAttr(_hrefVal) + "\"";
+        }
       }
       out += ">";
       out += escapeHtml(feature.link.label);

@@ -12,22 +12,22 @@
 import { watch } from "node:fs";
 import { join } from "node:path";
 import {
-  decodeSchemaAddress,
   blockRegistry,
-  renderPage,
   compileBlockTemplates,
-  type PageConfig,
+  decodeSchemaAddress,
+  renderPage,
 } from "@vojtaholik/static-kit-core";
 import { loadConfig, resolvePath } from "../config-loader.ts";
+import { processHtmlOutput } from "../html-output.ts";
+import { reloadSiteModules } from "../site-modules.ts";
+import { compileSpritesheet } from "../sprite-compiler.ts";
 import {
-  resolveStylesheet,
   compileStylesheetCached,
   invalidateStylesheetCache,
   isSassSource,
+  resolveStylesheet,
   sassHintIfDisabled,
 } from "../stylesheet.ts";
-import { compileSpritesheet } from "../sprite-compiler.ts";
-import { processHtmlOutput } from "../html-output.ts";
 
 const cwd = process.cwd();
 const config = await loadConfig(cwd);
@@ -42,6 +42,7 @@ console.log("🔨 Compiling block templates...");
 await compileBlockTemplates({
   blocksDir,
   genDir: join(blocksDir, "gen"),
+  typed: config.typedTemplates,
 });
 
 // Compile SVG spritesheet if svg/ directory exists
@@ -64,35 +65,17 @@ try {
   if (hint) console.warn(`ℹ ${hint}`);
 }
 
-// Hot-reloadable module loader
-// bun --watch can't trace dynamic import() with computed paths,
-// so we use require() + cache clearing to reload pages/blocks in-process.
-let pages: PageConfig[];
-let getPageByPath: (path: string) => PageConfig | undefined;
+// Hot-reloadable module loader. Uses await import() so pages/blocks may use
+// top-level await; see site-modules.ts for why the cache eviction is needed.
+let site = await reloadSiteModules(blocksDir, pagesDir);
 
-function clearModuleCache(...dirs: string[]) {
-  for (const key of Object.keys(require.cache)) {
-    if (dirs.some((dir) => key.startsWith(dir))) {
-      delete require.cache[key];
-    }
+async function reloadModules() {
+  try {
+    site = await reloadSiteModules(blocksDir, pagesDir);
+  } catch (err) {
+    console.error("⚠ Module reload failed (serving last good state):", err);
   }
 }
-
-function reloadModules() {
-  clearModuleCache(blocksDir, pagesDir);
-
-  blockRegistry.clear();
-  const blocksModule = require(join(blocksDir, "index.ts"));
-  if (typeof blocksModule.registerAllBlocks === "function") {
-    blocksModule.registerAllBlocks();
-  }
-
-  const pagesModule = require(join(pagesDir, "index.ts"));
-  pages = pagesModule.pages;
-  getPageByPath = pagesModule.getPageByPath;
-}
-
-reloadModules();
 
 const PORT = config.devPort;
 const publicPath = config.publicPath; // e.g. "/public"
@@ -143,9 +126,7 @@ function broadcastReload(type: "full" | "css" = "full") {
         sseClients.delete(controller);
       }
     }
-    console.log(
-      `🔄 ${lastChangeType === "css" ? "CSS" : "Full"} reload triggered`
-    );
+    console.log(`🔄 ${lastChangeType === "css" ? "CSS" : "Full"} reload triggered`);
   }, 50);
 }
 
@@ -153,8 +134,9 @@ function broadcastReload(type: "full" | "css" = "full") {
 const watchDirs = [blocksDir, pagesDir, publicDir, svgDir];
 
 async function handleFileChange(filename: string, dir: string) {
-  // Ignore generated files
-  if (filename.includes("/gen/") || filename.endsWith(".render.ts")) return;
+  // Ignore generated files (filename is relative to the watched dir, so
+  // "gen/index.ts" has no leading slash)
+  if (/(^|[/\\])gen[/\\]/.test(filename) || filename.endsWith(".render.ts")) return;
 
   // SVG in svg/ directory changed - recompile spritesheet
   if (filename.endsWith(".svg") && dir === svgDir) {
@@ -182,30 +164,23 @@ async function handleFileChange(filename: string, dir: string) {
     await compileBlockTemplates({
       blocksDir,
       genDir: join(blocksDir, "gen"),
+      typed: config.typedTemplates,
     });
-    try {
-      reloadModules();
-    } catch (err) {
-      console.error("⚠ Module reload failed:", err);
-    }
+    await reloadModules();
     broadcastReload("full");
     return;
   }
 
   // Source file changed - reload modules in-process, then broadcast
   if (filename.endsWith(".ts") || filename.endsWith(".js")) {
-    try {
-      reloadModules();
-    } catch (err) {
-      console.error("⚠ Module reload failed:", err);
-    }
+    await reloadModules();
     broadcastReload("full");
   }
 }
 
 for (const dir of watchDirs) {
   try {
-    watch(dir, { recursive: true }, (event, filename) => {
+    watch(dir, { recursive: true }, (_event, filename) => {
       if (!filename) return;
       handleFileChange(filename, dir);
     });
@@ -282,7 +257,7 @@ Bun.serve({
       // Dev API endpoints
       if (path === "/__pages") {
         return Response.json(
-          pages.map((p) => ({
+          site.pages.map((p) => ({
             id: p.id,
             path: p.path,
             title: p.title,
@@ -292,7 +267,7 @@ Bun.serve({
 
       if (path === "/__site") {
         return Response.json({
-          pages: pages.map((p) => ({
+          pages: site.pages.map((p) => ({
             id: p.id,
             path: p.path,
             title: p.title,
@@ -304,15 +279,12 @@ Bun.serve({
       if (path === "/__inspect") {
         const address = url.searchParams.get("address");
         if (!address) {
-          return Response.json(
-            { error: "Missing address parameter" },
-            { status: 400 }
-          );
+          return Response.json({ error: "Missing address parameter" }, { status: 400 });
         }
 
         try {
           const decoded = decodeSchemaAddress(address);
-          const page = pages.find((p) => p.id === decoded.pageId);
+          const page = site.pages.find((p) => p.id === decoded.pageId);
           const region = page?.regions[decoded.region];
           const block = region?.blocks.find((b) => b.id === decoded.blockId);
           const blockDef = block ? blockRegistry.get(block.type) : null;
@@ -343,10 +315,7 @@ Bun.serve({
               : null,
           });
         } catch (err) {
-          return Response.json(
-            { error: "Invalid address", details: String(err) },
-            { status: 400 }
-          );
+          return Response.json({ error: "Invalid address", details: String(err) }, { status: 400 });
         }
       }
 
@@ -363,11 +332,7 @@ Bun.serve({
             "Cache-Control": "no-cache, no-store, must-revalidate",
           };
           try {
-            const source = await resolveStylesheet(
-              publicDir,
-              relativePath,
-              config.scss
-            );
+            const source = await resolveStylesheet(publicDir, relativePath, config.scss);
             if (source) {
               const css = await compileStylesheetCached({
                 source,
@@ -403,13 +368,14 @@ Bun.serve({
 
       // Page routes
       const pagePath = path === "/" ? "/" : path.replace(/\/$/, "");
-      const page = getPageByPath(pagePath);
+      const page = site.getPageByPath(pagePath);
 
       if (page) {
         let html = await renderPage(page, {
           templateDir: pagesDir,
           isDev: true,
-          assetBase: "/",
+          assetBase: publicPath,
+          vlna: config.vlna,
         });
         html = await processHtmlOutput(html, config.htmlOutput);
 
@@ -418,8 +384,14 @@ Bun.serve({
         });
       }
 
-      // 404
-      return new Response("Not Found", { status: 404 });
+      // 404 — assets get a plain response, everything else a page listing routes
+      if (path.startsWith(`${publicPath}/`) || /\.[a-z0-9]+$/i.test(path)) {
+        return new Response("Not Found", { status: 404 });
+      }
+      return new Response(renderNotFoundPage(path), {
+        status: 404,
+        headers: { "Content-Type": "text/html" },
+      });
     } catch (err) {
       console.error("Error handling request:", err);
       return new Response(
@@ -427,9 +399,7 @@ Bun.serve({
           <head><title>Error</title></head>
           <body style="font-family: system-ui; padding: 2rem;">
             <h1>Server Error</h1>
-            <pre style="background: #f5f5f5; padding: 1rem; overflow: auto;">${String(
-              err
-            )}</pre>
+            <pre style="background: #f5f5f5; padding: 1rem; overflow: auto;">${String(err)}</pre>
           </body>
         </html>`,
         {
@@ -440,6 +410,51 @@ Bun.serve({
     }
   },
 });
+
+/**
+ * Dev-only 404 page: what was requested, every page the site knows about,
+ * and every registered block type.
+ */
+function renderNotFoundPage(requested: string): string {
+  const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+  const pageRows = site.pages
+    .map(
+      (p) =>
+        `<li><a href="${esc(p.path)}">${esc(p.path)}</a> <span class="muted">${esc(p.title)} · ${esc(p.id)}</span></li>`
+    )
+    .join("\n");
+  const blockRows = blockRegistry
+    .types()
+    .map((t) => `<li><code>${esc(t)}</code></li>`)
+    .join("\n");
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>404 · ${esc(requested)}</title>
+<style>
+  body { font: 15px/1.5 system-ui, sans-serif; margin: 0; padding: 3rem 2rem; max-width: 52rem; color: #1a1a1a; background: #fafafa; }
+  h1 { font-size: 1.6rem; margin: 0 0 .25rem; }
+  h1 code, li code { font: 0.9em ui-monospace, monospace; background: #eee; padding: .1em .35em; border-radius: 4px; }
+  h2 { font-size: 1rem; margin: 2rem 0 .5rem; text-transform: uppercase; letter-spacing: .05em; color: #666; }
+  ul { padding-left: 1.2rem; margin: 0; }
+  li { margin: .2rem 0; }
+  .muted { color: #888; font-size: .9em; }
+  .hint { color: #666; margin-top: 2.5rem; font-size: .9em; }
+</style>
+</head>
+<body>
+<h1>No page at <code>${esc(requested)}</code></h1>
+<p class="muted">static-kit dev server · this page is never emitted by <code>build</code></p>
+<h2>Pages (${site.pages.length})</h2>
+<ul>${pageRows || '<li class="muted">none exported from pages/index.ts</li>'}</ul>
+<h2>Registered blocks (${blockRegistry.types().length})</h2>
+<ul>${blockRows || '<li class="muted">none — is registerAllBlocks() exported from blocks/index.ts?</li>'}</ul>
+<p class="hint">Add a page: export a PageConfig with <code>path: "${esc(requested)}"</code> and include it in the <code>pages</code> array.</p>
+</body>
+</html>`;
+}
 
 console.log(`
   Dev server running at http://localhost:${PORT}

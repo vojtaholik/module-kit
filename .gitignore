@@ -5,7 +5,7 @@ node_modules/
 dist/
 
 # Generated files
-src/blocks/gen/
+
 
 # Bun
 bun.lockb
@@ -21,3 +21,7 @@ bun.lockb
 .env.local
 
 .claude/.worker-tracking
+# CLI test fixture output
+packages/cli/test/fixtures/**/gen/
+packages/cli/test/fixtures/**/dist/
+packages/cli/test/fixtures/.scratch/

@@ -1,5 +1,5 @@
-import { z } from "zod/v4";
 import { defineBlock } from "@vojtaholik/static-kit-core";
+import { z } from "zod/v4";
 import { renderTextSection } from "./gen/text-section.render.ts";
 
 export const textSectionPropsSchema = z.object({

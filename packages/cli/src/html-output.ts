@@ -1,6 +1,6 @@
-import { html as beautifyHtml } from "js-beautify";
-import { minify } from "html-minifier-terser";
 import type { StaticKitConfig } from "@vojtaholik/static-kit-core";
+import { minify } from "html-minifier-terser";
+import { html as beautifyHtml } from "js-beautify";
 
 /**
  * Post-process rendered HTML based on config.htmlOutput setting.

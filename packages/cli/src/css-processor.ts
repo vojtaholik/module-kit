@@ -8,8 +8,8 @@
  * - Minification (build only)
  */
 
-import { transform, browserslistToTargets } from "lightningcss";
 import browserslist from "browserslist";
+import { browserslistToTargets, transform } from "lightningcss";
 
 // Cache the targets since browserslist resolution is expensive
 let cachedTargets: ReturnType<typeof browserslistToTargets> | null = null;
@@ -65,10 +65,7 @@ export function processCSS(options: CSSProcessOptions): CSSProcessResult {
 /**
  * Process CSS from a string (convenience wrapper)
  */
-export function processCSSString(
-  css: string,
-  options: Omit<CSSProcessOptions, "code">
-): string {
+export function processCSSString(css: string, options: Omit<CSSProcessOptions, "code">): string {
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
 

@@ -1,13 +1,11 @@
-import { join } from "node:path";
 import { existsSync } from "node:fs";
+import { join } from "node:path";
 import { configSchema, type StaticKitConfig } from "@vojtaholik/static-kit-core";
 
 /**
  * Load static-kit.config.ts from the current working directory
  */
-export async function loadConfig(
-  cwd = process.cwd()
-): Promise<StaticKitConfig> {
+export async function loadConfig(cwd = process.cwd()): Promise<StaticKitConfig> {
   const configPath = join(cwd, "static-kit.config.ts");
 
   // Check if file exists first

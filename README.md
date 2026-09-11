@@ -1,6 +1,6 @@
-# Module Kit
+# Static Kit
 
-A static site generator with block-based content management and a Vue-like template DSL.
+A static site generator with block-based content management and a Vue-like template DSL. Bun only.
 
 ## Quick Start
 
@@ -20,34 +20,28 @@ bun run build
 
 ## Project Structure
 
+A project scaffolded with `bun create @vojtaholik/static-kit` looks like this (paths are configurable in `static-kit.config.ts`):
+
 ```
-src/
-├── blocks/                # Block implementations
-│   ├── *.block.html      # Template files (Vue-like DSL)
-│   ├── *.block.ts        # Block definitions (Zod schemas)
-│   └── gen/              # Generated render functions (auto)
-├── cms-blocks.ts          # CMS schema definitions
-├── site/
-│   └── pages/            # Page templates & configs
-│       ├── base.html     # HTML template with regions
-│       ├── *.page.ts     # Page configurations
-│       └── index.ts      # Page exports
-└── public/
-    ├── css/styles.css    # Site design system
-    ├── js/               # Client-side JS
-    ├── svg/              # Source SVGs for sprite
-    └── sprite.svg        # Generated spritesheet
-
-packages/
-├── core/                  # Core library
-│   ├── layout.ts         # Layout enums (tone, density, etc.)
-│   ├── schema-address.ts # CMS editing addresses
-│   ├── block-registry.ts # Block definition & registry
-│   └── template-compiler.ts # HTML → TypeScript compiler
-└── cli/                   # CLI commands (dev, build, gen, sprite)
-
+blocks/                    # Block implementations
+├── *.block.html          # Template files (Vue-like DSL)
+├── *.block.ts            # Block definitions (Zod schemas)
+├── index.ts              # registerAllBlocks() + BlockPropsMap augmentation
+└── gen/                  # Generated render functions (auto, git-ignored)
+site/pages/
+├── base.html             # HTML template with data-region slots
+├── *.page.ts             # Page configurations
+└── index.ts              # `pages` array + getPageByPath()
+public/                    # Served at publicPath (default /public), mirrored to dist/public
+├── css/styles.css        # Site design system
+├── js/                   # Client-side JS
+├── svg/                  # Source SVGs for sprite
+└── sprite.svg            # Generated spritesheet
+static-kit.config.ts
 dist/                      # Build output (git-ignored)
 ```
+
+This repo is the monorepo: `packages/core` (compiler, registry, renderer), `packages/cli` (dev/build/gen/sprite), `packages/create-static-kit` (scaffolder), and `example/` (a reference site the root scripts point at).
 
 ## Template DSL
 
@@ -83,6 +77,21 @@ Block templates use a Vue-like syntax compiled to TypeScript render functions.
 
 **Note:** There is no `v-else` or `v-else-if`. Use separate `v-if` blocks or ternary expressions in interpolation.
 
+### Branches (v-else-if / v-else)
+
+Sibling elements can continue a `v-if` chain. Whitespace and comments between them are fine; any other node ends the chain.
+
+```html
+<p v-if="props.status === 'ok'">All good</p>
+<p v-else-if="props.status === 'warn'">Careful</p>
+<p v-else>Down</p>
+
+<template v-if="props.image"><img :src="props.image.src" :alt="props.image.alt"></template>
+<template v-else><div class="placeholder"></div></template>
+```
+
+`v-if` on the same element as `v-for` is evaluated per iteration. `v-else` cannot be combined with `v-for`.
+
 ### Loops (v-for)
 
 ```html
@@ -110,8 +119,11 @@ The loop variable and index are scoped to the loop body.
 <!-- Dynamic value binding -->
 <a :href="props.link.href">{{ props.link.label }}</a>
 
-<!-- Conditional attribute (only rendered if truthy) -->
+<!-- Omitted only for null / undefined / false; 0 and "" are rendered -->
 <img :src="props.image?.src" :alt="props.image?.alt" />
+
+<!-- Static + dynamic class merge into one attribute -->
+<div class="card" :class="props.featured ? 'card--featured' : null"></div>
 
 <!-- Expression in binding -->
 <div :class="`grid grid--${props.columns}`"></div>
@@ -190,17 +202,46 @@ The fallback children are rendered when:
 }
 ```
 
+### Block-level `<style>` and `<script>`
+
+A `<style>` or `<script>` at the **top level** of a block template is hoisted out of the block's output and injected once per page: styles before `</head>`, scripts before `</body>`, in the order blocks first appear. Ten instances of a block on one page still produce one style and one script tag. Nested tags (inside another element) are rendered inline as-is.
+
+```html
+<style>
+  .counter { display: flex; gap: .5rem; }
+</style>
+
+<div class="counter" data-counter>
+  <button data-dec>−</button>
+  <output>{{ props.start }}</output>
+  <button data-inc>+</button>
+</div>
+
+<script>
+  document.querySelectorAll("[data-counter]").forEach((el) => { /* ... */ });
+</script>
+```
+
+Hoisted content is static — no `{{ }}` inside it. Put per-instance data in `data-*` attributes and read them from the script.
+
+### Typed templates
+
+When `hero.block.ts` exports `HeroProps` (`<Name>Props` in PascalCase, next to `hero.block.html`), the generated `gen/hero.render.ts` types `props` against it. `{{ props.titel }}` is then a `tsc` error, and `v-if="props.image"` narrows `props.image.src` like normal TypeScript. Blocks without a matching export fall back to `any`. Disable with `typedTemplates: false` in config.
+
 ### Available Context Variables
 
-- `props` - Block props (Zod-validated)
+- `props` - Block props (Zod-validated, typed when `<Name>Props` is exported)
 - `ctx` - Render context (`pageId`, `assetBase`, `isDev`, `layout`)
 - `addr` - Schema address for CMS editing
 - `encodeSchemaAddress(addr)` - Helper to encode address for data attributes
+- `asset(path)` - URL under `publicPath`: `asset("images/hero.jpg")` → `/public/images/hero.jpg`, then `basePath` is applied at build. Prefer this over hand-written asset paths so nested routes and subdirectory deploys keep working.
 - Loop variables (`item`, `i`, etc.) - within v-for scope
+
+`data-block-id` and `data-schema-address` are emitted only in dev; production HTML never carries them.
 
 ## Creating Blocks
 
-### 1. Create the template (`src/blocks/my-block.block.html`)
+### 1. Create the template (`blocks/my-block.block.html`)
 
 ```html
 <section
@@ -218,7 +259,7 @@ The fallback children are rendered when:
 </section>
 ```
 
-### 2. Define the block (`src/blocks/my-block.block.ts`)
+### 2. Define the block (`blocks/my-block.block.ts`)
 
 ```typescript
 import { z } from "zod/v4";
@@ -246,7 +287,7 @@ export const myBlockBlock = defineBlock({
 });
 ```
 
-### 3. Register the block (`src/blocks/index.ts`)
+### 3. Register the block (`blocks/index.ts`)
 
 ```typescript
 import { blockRegistry } from "@vojtaholik/static-kit-core";
@@ -266,35 +307,12 @@ bun run gen
 
 This compiles `my-block.block.html` → `gen/my-block.render.ts`
 
-### 5. (Optional) Define CMS schema (`src/cms-blocks.ts`)
-
-```typescript
-export const cmsBlocks = {
-  myBlock: {
-    type: "myBlock",
-    label: "My Block",
-    fields: {
-      title: { type: "text", label: "Title", required: true },
-      content: { type: "richText", label: "Content", required: true },
-      cta: {
-        type: "object",
-        label: "Call to Action",
-        fields: {
-          href: { type: "text", label: "URL", required: true },
-          label: { type: "text", label: "Label", required: true },
-        },
-      },
-    },
-  },
-};
-```
-
 ## Creating Pages
 
-Add page configs in `src/site/pages/`:
+Add page configs in `site/pages/`:
 
 ```typescript
-import type { PageConfig } from "../../rendering/html-renderer";
+import type { PageConfig } from "@vojtaholik/static-kit-core";
 
 export const myPage: PageConfig = {
   id: "my-page",
@@ -302,6 +320,10 @@ export const myPage: PageConfig = {
   title: "My Page",
   template: "base.html",
   density: "comfortable",
+  meta: {
+    description: "Injected as <meta name=…>; og:/twitter: keys become property=…",
+    "og:title": "My Page",
+  },
   regions: {
     main: {
       blocks: [
@@ -323,7 +345,7 @@ export const myPage: PageConfig = {
 };
 ```
 
-Then export from `src/site/pages/index.ts`.
+Then add it to the `pages` array in `site/pages/index.ts`. Block `id`s must be unique within a page — the renderer throws on a duplicate. `<title>` and any `meta` tags are filled from the config; a matching tag already in the template is updated in place.
 
 ## Layout Props
 
@@ -350,10 +372,10 @@ Compile individual SVGs into a single spritesheet for efficient icon usage.
 
 ### Setup
 
-1. Place SVG files in `src/public/svg/`:
+1. Place SVG files in `public/svg/`:
 
 ```
-src/public/svg/
+public/svg/
 ├── magic-wand.svg
 ├── avatar-outline.svg
 └── search.svg
@@ -365,7 +387,7 @@ src/public/svg/
 bun run sprite
 ```
 
-This generates `src/public/sprite.svg` with each SVG as a `<symbol>`:
+This generates `public/sprite.svg` with each SVG as a `<symbol>`:
 
 ```xml
 <svg xmlns="http://www.w3.org/2000/svg" style="display:none;">
@@ -401,7 +423,7 @@ This generates `src/public/sprite.svg` with each SVG as a `<symbol>`:
 
 ## Design System
 
-The CSS in `src/public/css/styles.css` provides:
+The CSS in `public/css/styles.css` provides:
 
 - **Design tokens** - Colors, spacing, typography in `:root`
 - **Layout primitives** - `.container`, `.grid`, `.stack`
@@ -437,11 +459,51 @@ How it works:
 - `styles.css` **and** `styles.scss` side by side is an error — one output, one source.
 - `.scss` files present but `scss` left off? The CLI prints a hint and copies them verbatim, as before.
 
+## Czech typography (vlna)
+
+Rendered HTML gets non-breaking spaces after short Czech prepositions (`k`, `s`, `v`, `bez`, `pro`, …) and widow prevention, based on ČSN 01 6910. By default this runs only when `<html lang>` is `cs` or `sk`. Override in config:
+
+```ts
+export default defineConfig({
+  vlna: "auto", // default — follow <html lang>
+  // vlna: true   // always on
+  // vlna: false  // always off
+});
+```
+
+## Configuration
+
+`static-kit.config.ts` at the project root. Every key is optional:
+
+```ts
+import { defineConfig } from "@vojtaholik/static-kit-core";
+
+export default defineConfig({
+  blocksDir: "blocks",
+  pagesDir: "site/pages",
+  publicDir: "public",
+  outDir: "dist",
+  publicPath: "/public",      // URL prefix publicDir is served/copied under
+  devPort: 3000,
+  basePath: "",               // "/my-site" for subdirectory deploys; rewrites href/src/srcset/poster/action
+  trailingSlash: false,       // true: /about → dist/about/index.html instead of dist/about.html
+  htmlOutput: "formatted",    // or "minified"
+  cssOutput: "formatted",     // or "minified"
+  scss: false,                // see SCSS below
+  typedTemplates: true,       // see Typed templates above
+  vlna: "auto",               // see Czech typography below
+});
+```
+
+`build` is strict: an unknown block type or props that fail their schema abort the build with the page, block id and issue. The dev server logs the same message and renders the page without that block.
+
 ## Dev Server Features
 
 - **Hot reload** - Changes to templates, CSS, and pages trigger instant refresh
 - **Alt+click inspector** - Click any block while holding Alt to see its schema address
 - **Slot error toast** - Validation errors for `<render-slot>` shown in bottom-right corner
+- **404 page** - Lists every page path and registered block type, so a typo in a route or a block that never got registered is obvious
+- **Top-level await** - `blocks/` and `site/pages/` are loaded with `await import()` in both dev and build, so a module may `await` at top level (a syntax highlighter, a fetch at build time). Hot reload re-evaluates the whole graph under those directories.
 - **API endpoints:**
   - `/__pages` - List all pages
   - `/__site` - Full site config
@@ -455,6 +517,15 @@ bun run dev      # Start dev server with hot reload
 bun run build    # Production build to dist/
 bun run gen      # Compile *.block.html → gen/*.render.ts
 bun run sprite   # Compile svg/ → sprite.svg
+```
+
+Monorepo only:
+
+```bash
+bun run lint     # biome check (format + lint)
+bun run format   # biome check --write
+bun run check    # lint + typecheck + test
+bun run release  # bump versions, tag, push; CI publishes to npm
 ```
 
 ## License
